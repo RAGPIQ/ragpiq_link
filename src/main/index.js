@@ -65,7 +65,7 @@ function createWindow() {
     show: false
   });
 
-  win.loadURL('https://ragpiq.com/version-test/ragpiq_link_desktop');
+  win.loadURL('https://ragpiq.com/ragpiq_link_desktop');
 
   // Wait for the main window to finish loading, then show it
   win.webContents.once('did-finish-load', () => {
