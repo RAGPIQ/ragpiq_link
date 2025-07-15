@@ -1,0 +1,218 @@
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
+const { spawn } = require('child_process');
+const https = require('https');
+const http = require('http');
+const { URL } = require('url');
+
+let win;
+let watcherProcess = null;
+let printerWatcherProcess = null;
+let storedCameraId = null;
+let isQuitting = false;
+
+// 🔗 Send camera ID to server on app exit
+function sendCameraIdToServer(cameraId) {
+  if (!cameraId) return;
+
+  const url = new URL('https://n8n2.ragpiq.com/webhook-test/6315c648-8d7e-4273-8c8b-669164a2fce3');
+  url.searchParams.append('camera_id', cameraId);
+
+  const lib = url.protocol === 'https:' ? https : http;
+  const req = lib.get(url.toString(), (res) => {
+    console.log(`📡 Camera ID sent. Status: ${res.statusCode}`);
+  });
+
+  req.on('error', (err) => {
+    console.error("❌ Failed to send camera ID:", err);
+  });
+
+  req.end();
+}
+
+function createWindow() {
+  win = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+
+  win.loadURL('https://ragpiq.com/version-test/ragpiq_link_desktop');
+}
+
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('will-quit', (event) => {
+  if (isQuitting) return; // 🔁 prevent repeated calls
+
+  if (printerWatcherProcess && storedCameraId) {
+    console.log("🛑 App closing, printer watcher running — sending camera ID...");
+
+    event.preventDefault();
+    isQuitting = true;
+
+    const url = new URL('https://n8n2.ragpiq.com/webhook-test/6315c648-8d7e-4273-8c8b-669164a2fce3');
+    url.searchParams.append('camera_id', storedCameraId);
+
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.get(url.toString(), (res) => {
+      console.log(`📡 Camera ID sent. Status: ${res.statusCode}`);
+      app.quit(); // only once
+    });
+
+    req.on('error', (err) => {
+      console.error("❌ Failed to send camera ID:", err);
+      app.quit(); // still quit on error
+    });
+
+    req.end();
+  } else {
+    console.log("ℹ️ Skipping camera ID webhook (either printer watcher not running or camera ID not set)");
+  }
+});
+
+// 📸 Start camera image watcher
+ipcMain.handle('start-watcher', async (event, cameraId) => {
+  storedCameraId = cameraId;
+  if (watcherProcess) {
+    console.log("⚠️ Watcher already running.");
+    return 'already running';
+  }
+
+  watcherProcess = spawn('python', ['watcher.py', cameraId]);
+
+  watcherProcess.stdout.on('data', (data) => {
+    const msg = data.toString().trim();
+    console.log(`[WATCHER] ${msg}`);
+
+    if (msg.startsWith('[WATCHER_SUCCESS]')) {
+      win.webContents.send('watcher-log', {
+        type: 'success',
+        message: msg.replace('[WATCHER_SUCCESS]', '').trim()
+      });
+    } else if (msg.startsWith('[WATCHER_ERROR]')) {
+      win.webContents.send('watcher-log', {
+        type: 'error',
+        message: msg.replace('[WATCHER_ERROR]', '').trim()
+      });
+    }
+  });
+
+  watcherProcess.stderr.on('data', (data) => {
+    console.error(`[WATCHER ERROR] ${data}`);
+  });
+
+  watcherProcess.on('close', (code) => {
+    console.log(`[WATCHER EXIT] Code ${code}`);
+    watcherProcess = null;
+  });
+
+  return 'started';
+});
+
+ipcMain.handle('stop-watcher', async () => {
+  if (watcherProcess) {
+    console.log("🛑 Stopping watcher...");
+    watcherProcess.kill();
+    watcherProcess = null;
+    return 'stopped';
+  } else {
+    console.log("⚠️ No watcher running to stop.");
+    return 'not running';
+  }
+});
+
+// 🖨️ Start continuous printer watcher
+ipcMain.handle('start-printer-watcher', async () => {
+  if (printerWatcherProcess) {
+    console.log("⚠️ Printer watcher already running.");
+    return 'already running';
+  }
+
+  printerWatcherProcess = spawn('python', ['detect_printer.py']);
+
+  printerWatcherProcess.stdout.on('data', (data) => {
+    try {
+      const msg = data.toString().trim();
+      console.log(`[PRINTER WATCHER] ${msg}`);
+      const parsed = JSON.parse(msg);
+
+      win.webContents.send('printer-status', {
+        printer_name: parsed.printer_name || "",
+        setup_required: parsed.setup_required,
+      });
+    } catch (err) {
+      console.error("❌ Failed to parse printer update:", data.toString());
+    }
+  });
+
+  printerWatcherProcess.stderr.on('data', (data) => {
+    console.error(`[PRINTER WATCHER ERROR] ${data}`);
+  });
+
+  printerWatcherProcess.on('close', (code) => {
+    console.log(`[PRINTER WATCHER EXIT] Code ${code}`);
+    printerWatcherProcess = null;
+  });
+
+  return 'started';
+});
+
+ipcMain.handle('stop-printer-watcher', async () => {
+  if (printerWatcherProcess) {
+    console.log("🛑 Stopping printer watcher...");
+    printerWatcherProcess.kill();
+    printerWatcherProcess = null;
+    return 'stopped';
+  } else {
+    console.log("⚠️ No printer watcher running.");
+    return 'not running';
+  }
+});
+
+// 🏷️ Label printer
+ipcMain.handle('print-label', async (event, label) => {
+  return new Promise((resolve) => {
+    const python = spawn('python', ['label_print.py', label.qr, label.barcode, label.created]);
+
+    let stdoutBuffer = '';
+    let stderrBuffer = '';
+
+    python.stdout.on('data', (data) => {
+      stdoutBuffer += data.toString();
+    });
+
+    python.stderr.on('data', (data) => {
+      stderrBuffer += data.toString();
+    });
+
+    python.on('close', (code) => {
+      if (code === 0) {
+        win.webContents.send('label-log', {
+          type: 'success',
+          message: stdoutBuffer.trim()
+        });
+      } else {
+        let errorMessage = "Failed to print label.";
+        if (stderrBuffer.includes("Device not found")) {
+          errorMessage = "Label printer not connected.";
+        }
+
+        win.webContents.send('label-log', {
+          type: 'error',
+          message: errorMessage
+        });
+      }
+
+      resolve();
+    });
+  });
+});
