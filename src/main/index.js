@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const https = require('https');
@@ -6,16 +6,19 @@ const http = require('http');
 const { URL } = require('url');
 
 let win;
+let splash;
 let watcherProcess = null;
 let printerWatcherProcess = null;
 let storedCameraId = null;
 let isQuitting = false;
 
+icon: path.join(__dirname, '..', '..', 'resources', 'icon.ico')
+
 // 🔗 Send camera ID to server on app exit
 function sendCameraIdToServer(cameraId) {
   if (!cameraId) return;
 
-  const url = new URL('https://n8n2.ragpiq.com/webhook-test/6315c648-8d7e-4273-8c8b-669164a2fce3');
+  const url = new URL('https://n8n2.ragpiq.com/6315c648-8d7e-4273-8c8b-669164a2fce3');
   url.searchParams.append('camera_id', cameraId);
 
   const lib = url.protocol === 'https:' ? https : http;
@@ -31,17 +34,46 @@ function sendCameraIdToServer(cameraId) {
 }
 
 function createWindow() {
+  // Create splash screen window
+  const splash = new BrowserWindow({
+    width: 500,
+    height: 300,
+    frame: false,
+    alwaysOnTop: true,
+    transparent: false,
+    resizable: false,
+    backgroundColor: '#000000',
+    show: true
+  });
+
+  splash.loadFile(path.join(__dirname, '..', 'ui', 'splash.html'));
+
+  // Create main app window (initially hidden)
   win = new BrowserWindow({
     width: 1200,
     height: 800,
+    frame: false, // hides native controls
+    titleBarStyle: 'hidden',
+    icon: path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
     webPreferences: {
-      nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, '..', 'preload.js')
-    }
+      nodeIntegration: false,
+      preload: path.join(__dirname, '..', 'preload.js'),
+      sandbox: false
+    },
+    backgroundColor: '#121212',
+    show: false
   });
 
   win.loadURL('https://ragpiq.com/version-test/ragpiq_link_desktop');
+
+  // Wait for the main window to finish loading, then show it
+  win.webContents.once('did-finish-load', () => {
+    setTimeout(() => {
+      splash.close();
+      win.show();
+    }, 1000); // you can tweak the delay
+  });
 }
 
 app.whenReady().then(createWindow);
@@ -59,7 +91,7 @@ app.on('will-quit', (event) => {
     event.preventDefault();
     isQuitting = true;
 
-    const url = new URL('https://n8n2.ragpiq.com/webhook-test/6315c648-8d7e-4273-8c8b-669164a2fce3');
+    const url = new URL('https://n8n2.ragpiq.com/6315c648-8d7e-4273-8c8b-669164a2fce3');
     url.searchParams.append('camera_id', storedCameraId);
 
     const lib = url.protocol === 'https:' ? https : http;
@@ -77,6 +109,14 @@ app.on('will-quit', (event) => {
   } else {
     console.log("ℹ️ Skipping camera ID webhook (either printer watcher not running or camera ID not set)");
   }
+});
+
+ipcMain.on('app-exit', () => {
+  app.quit();
+});
+
+ipcMain.on('open-external', (event, url) => {
+  shell.openExternal(url);
 });
 
 // 📸 Start camera image watcher

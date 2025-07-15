@@ -15,7 +15,7 @@ if getattr(sys, 'frozen', False):
     exe_dir = os.path.dirname(sys.executable)
     BASE_DIR = os.path.abspath(os.path.join(exe_dir, ".."))
 else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 WATCH_DIRECTORY = os.path.join(BASE_DIR, "PROCESSING")
 DESTINATION_DIRECTORY = os.path.join(BASE_DIR, "COMPLETE")

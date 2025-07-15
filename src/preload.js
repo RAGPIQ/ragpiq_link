@@ -1,6 +1,8 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, shell } = require('electron');
 
 contextBridge.exposeInMainWorld('ragpiqBridge', {
+  exitApp: () => ipcRenderer.send('app-exit'),
+  openExternal: (url) => ipcRenderer.send('open-external', url),
   startWatcher: (cameraId) => ipcRenderer.invoke('start-watcher', cameraId),
   stopWatcher: () => ipcRenderer.invoke('stop-watcher'),
   startPrinter: () => ipcRenderer.invoke('start-printer-watcher'),
