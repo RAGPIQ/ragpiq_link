@@ -1,0 +1,46 @@
+{
+  "name": "ragpiq-link",
+  "version": "1.0.0",
+  "description": "Ragpiq Link Desktop App",
+  "main": "src/main/index.js",
+  "author": "Ragpiq Pty Ltd",
+  "license": "ISC",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.ragpiq.link",
+    "productName": "Ragpiq Link",
+    "copyright": "Copyright © 2025 Ragpiq",
+    "files": [
+      "**/*"
+    ],
+    "directories": {
+      "buildResources": "resources"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "RAGPIQ",
+        "repo": "ragpiq_link"
+      }
+    ],
+    "mac": {
+              "target": "dmg",
+              "icon": "resources/icon.ico"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.ico"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^5.3.0"
+  },
+  "devDependencies": {
+    "electron": "27.1.3",
+    "electron-builder": "^24.6.0"
+  }
+}
