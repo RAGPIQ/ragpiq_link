@@ -20,13 +20,7 @@
     "directories": {
       "buildResources": "resources"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "RAGPIQ",
-        "repo": "ragpiq_link"
-      }
-    ],
+    "publish": null,
     "mac": {
               "target": "dmg",
               "icon": "resources/icon.ico"
