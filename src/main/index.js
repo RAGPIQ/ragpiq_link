@@ -12,7 +12,9 @@ let printerWatcherProcess = null;
 let storedCameraId = null;
 let isQuitting = false;
 
-icon: path.join(__dirname, '..', '..', 'resources', 'icon.ico')
+icon: process.platform === 'darwin'
+  ? path.join(__dirname, '..', '..', 'resources', 'iconMac.icns')
+  : path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
 
 // 🔗 Send camera ID to server on app exit
 function sendCameraIdToServer(cameraId) {
@@ -54,7 +56,9 @@ function createWindow() {
     height: 800,
     frame: false, // hides native controls
     titleBarStyle: 'hidden',
-    icon: path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
+    icon: process.platform === 'darwin'
+    ? path.join(__dirname, '..', '..', 'resources', 'iconMac.icns')
+    : path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

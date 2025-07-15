@@ -4,6 +4,7 @@
   "description": "Ragpiq Link Desktop App",
   "main": "src/main/index.js",
   "author": "Ragpiq Pty Ltd",
+  "asar": true,
   "license": "ISC",
   "scripts": {
     "start": "electron .",
@@ -22,11 +23,11 @@
     },
     "publish": null,
     "mac": {
-              "target": "dmg",
-              "icon": "resources/icon.ico"
+              "target": ["dmg"],
+              "icon": "resources/iconMac.icns"
     },
     "win": {
-      "target": "nsis",
+      "target": ["nsis"],
       "icon": "resources/icon.ico"
     }
   },
