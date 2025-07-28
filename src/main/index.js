@@ -7,14 +7,17 @@ const { URL } = require('url');
 
 let win;
 let splash;
-let watcherProcess = null;
 let printerWatcherProcess = null;
 let storedCameraId = null;
 let isQuitting = false;
 
-icon: process.platform === 'darwin'
-  ? path.join(__dirname, '..', '..', 'resources', 'iconMac.icns')
-  : path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
+// 🎯 Determine correct script path based on env
+const isDev = !app.isPackaged;
+const getScriptPath = (scriptName) => {
+  return isDev
+    ? path.join(__dirname, '..', 'scripts', scriptName)
+    : path.join(process.resourcesPath, 'app', 'src', 'scripts', scriptName);
+};
 
 // 🔗 Send camera ID to server on app exit
 function sendCameraIdToServer(cameraId) {
@@ -36,8 +39,7 @@ function sendCameraIdToServer(cameraId) {
 }
 
 function createWindow() {
-  // Create splash screen window
-  const splash = new BrowserWindow({
+  splash = new BrowserWindow({
     width: 500,
     height: 300,
     frame: false,
@@ -50,15 +52,15 @@ function createWindow() {
 
   splash.loadFile(path.join(__dirname, '..', 'ui', 'splash.html'));
 
-  // Create main app window (initially hidden)
   win = new BrowserWindow({
     width: 1200,
     height: 800,
-    frame: false, // hides native controls
+    resizable: false,
+    frame: false,
     titleBarStyle: 'hidden',
     icon: process.platform === 'darwin'
-    ? path.join(__dirname, '..', '..', 'resources', 'iconMac.icns')
-    : path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
+      ? path.join(__dirname, '..', '..', 'resources', 'iconMac.icns')
+      : path.join(__dirname, '..', '..', 'resources', 'icon.ico'),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -71,12 +73,11 @@ function createWindow() {
 
   win.loadURL('https://ragpiq.com/ragpiq_link_desktop');
 
-  // Wait for the main window to finish loading, then show it
   win.webContents.once('did-finish-load', () => {
     setTimeout(() => {
       splash.close();
       win.show();
-    }, 1000); // you can tweak the delay
+    }, 1000);
   });
 }
 
@@ -123,58 +124,6 @@ ipcMain.on('open-external', (event, url) => {
   shell.openExternal(url);
 });
 
-// 📸 Start camera image watcher
-ipcMain.handle('start-watcher', async (event, cameraId) => {
-  storedCameraId = cameraId;
-  if (watcherProcess) {
-    console.log("⚠️ Watcher already running.");
-    return 'already running';
-  }
-
-  const watcherPath = path.join(__dirname, '..', 'scripts', 'watcher.py');
-  watcherProcess = spawn('python', [watcherPath, cameraId]);
-
-  watcherProcess.stdout.on('data', (data) => {
-    const msg = data.toString().trim();
-    console.log(`[WATCHER] ${msg}`);
-
-    if (msg.startsWith('[WATCHER_SUCCESS]')) {
-      win.webContents.send('watcher-log', {
-        type: 'success',
-        message: msg.replace('[WATCHER_SUCCESS]', '').trim()
-      });
-    } else if (msg.startsWith('[WATCHER_ERROR]')) {
-      win.webContents.send('watcher-log', {
-        type: 'error',
-        message: msg.replace('[WATCHER_ERROR]', '').trim()
-      });
-    }
-  });
-
-  watcherProcess.stderr.on('data', (data) => {
-    console.error(`[WATCHER ERROR] ${data}`);
-  });
-
-  watcherProcess.on('close', (code) => {
-    console.log(`[WATCHER EXIT] Code ${code}`);
-    watcherProcess = null;
-  });
-
-  return 'started';
-});
-
-ipcMain.handle('stop-watcher', async () => {
-  if (watcherProcess) {
-    console.log("🛑 Stopping watcher...");
-    watcherProcess.kill();
-    watcherProcess = null;
-    return 'stopped';
-  } else {
-    console.log("⚠️ No watcher running to stop.");
-    return 'not running';
-  }
-});
-
 // 🖨️ Start continuous printer watcher
 ipcMain.handle('start-printer-watcher', async () => {
   if (printerWatcherProcess) {
@@ -182,8 +131,14 @@ ipcMain.handle('start-printer-watcher', async () => {
     return 'already running';
   }
 
-  const detectPrinterPath = path.join(__dirname, '..', 'scripts', 'detect_printer.py');
+  const detectPrinterPath = getScriptPath('detect_printer.py');
+  console.log("🧩 Starting printer watcher from path:", detectPrinterPath);
+
   printerWatcherProcess = spawn('python', [detectPrinterPath]);
+
+  printerWatcherProcess.on('error', (err) => {
+    console.error("❌ Spawn error (printer watcher):", err);
+  });
 
   printerWatcherProcess.stdout.on('data', (data) => {
     try {
@@ -227,8 +182,14 @@ ipcMain.handle('stop-printer-watcher', async () => {
 // 🏷️ Label printer
 ipcMain.handle('print-label', async (event, label) => {
   return new Promise((resolve) => {
-    const labelPrintPath = path.join(__dirname, '..', 'scripts', 'label_print.py');
+    const labelPrintPath = getScriptPath('label_print.py');
+    console.log("🏷️ Printing label via:", labelPrintPath);
+
     const python = spawn('python', [labelPrintPath, label.qr, label.barcode, label.created]);
+
+    python.on('error', (err) => {
+      console.error("❌ Spawn error (label print):", err);
+    });
 
     let stdoutBuffer = '';
     let stderrBuffer = '';

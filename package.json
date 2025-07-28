@@ -7,7 +7,7 @@
   "asar": true,
   "license": "ISC",
   "scripts": {
-    "start": "electron .",
+    "start": "npx electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
@@ -15,6 +15,7 @@
     "appId": "com.ragpiq.link",
     "productName": "Ragpiq Link",
     "copyright": "Copyright © 2025 Ragpiq",
+    "asarUnpack": ["src/scripts/**"],
     "files": [
       "**/*"
     ],
