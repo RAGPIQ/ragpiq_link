@@ -1,6 +1,6 @@
 {
   "name": "ragpiq-link",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "Ragpiq Link Desktop App",
   "main": "src/main/index.js",
   "author": "Ragpiq Pty Ltd",

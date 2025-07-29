@@ -71,7 +71,7 @@ function createWindow() {
     show: false
   });
 
-  win.loadURL('https://ragpiq.com/version-test/ragpiq_link_desktop');
+  win.loadURL('https://ragpiq.com/ragpiq_link_desktop');
 
   win.webContents.once('did-finish-load', () => {
     setTimeout(() => {
