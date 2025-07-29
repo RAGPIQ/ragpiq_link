@@ -32,6 +32,9 @@
       "icon": "resources/icon.ico"
     }
   },
+  "electronDownload": {
+  "mirror": "https://npmmirror.com/mirrors/electron/"
+},
   "dependencies": {
     "electron-updater": "^5.3.0"
   },
