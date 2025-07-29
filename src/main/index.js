@@ -16,7 +16,7 @@ const isDev = !app.isPackaged;
 const getScriptPath = (scriptName) => {
   return isDev
     ? path.join(__dirname, '..', 'scripts', scriptName)
-    : path.join(process.resourcesPath, 'app', 'src', 'scripts', scriptName);
+    : path.join(process.resourcesPath, 'app.asar.unpacked', 'src', 'scripts', scriptName);
 };
 
 // 🔗 Send camera ID to server on app exit
@@ -71,7 +71,7 @@ function createWindow() {
     show: false
   });
 
-  win.loadURL('https://ragpiq.com/ragpiq_link_desktop');
+  win.loadURL('https://ragpiq.com/version-test/ragpiq_link_desktop');
 
   win.webContents.once('did-finish-load', () => {
     setTimeout(() => {
