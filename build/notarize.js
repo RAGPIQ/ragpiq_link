@@ -1,3 +1,5 @@
+console.log("🔐 Running notarize.js hook...");
+
 require('dotenv').config();
 const { notarize } = require('@electron/notarize');
 

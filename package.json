@@ -30,13 +30,15 @@
   "entitlements": "build/entitlements.mac.plist",
   "entitlementsInherit": "build/entitlements.mac.plist",
   "category": "public.app-category.productivity",
-  "notarize": true
+  "notarize": {
+    "appBundleId": "com.ragpiq.desktoplink",
+    "teamId": "P6MVPWP945"
+  }
 },
     "win": {
       "target": ["nsis"],
       "icon": "resources/icon.ico"
-    },
-    "afterSign": "build/notarize.js"
+    }
   },
   "dependencies": {
     "electron-updater": "^5.3.0"
