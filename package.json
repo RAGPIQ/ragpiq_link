@@ -25,6 +25,7 @@
     "publish": null,
     "mac": {
   "target": ["dmg"],
+  "arch":["x64","arm64"],
   "icon": "resources/iconMac.icns",
   "hardenedRuntime": true,
   "entitlements": "build/entitlements.mac.plist",
