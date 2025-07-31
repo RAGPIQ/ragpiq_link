@@ -24,14 +24,15 @@
     },
     "publish": null,
     "mac": {
-              "target": ["dmg"],
-              "icon": "resources/iconMac.icns",
-              "hardenedRuntime": true,
-    "entitlements": "build/entitlements.mac.plist",
-    "entitlementsInherit": "build/entitlements.mac.plist",
-    "category": "public.app-category.productivity",
-    "notarize": true
-    },
+  "target": ["dmg"],
+  "icon": "resources/iconMac.icns",
+  "hardenedRuntime": true,
+  "entitlements": "build/entitlements.mac.plist",
+  "entitlementsInherit": "build/entitlements.mac.plist",
+  "category": "public.app-category.productivity",
+  "notarize": true,
+  "teamID": "P6MVPWP945"
+},
     "win": {
       "target": ["nsis"],
       "icon": "resources/icon.ico"
