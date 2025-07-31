@@ -24,7 +24,6 @@
       "buildResources": "resources"
     },
     "publish": null,
-    "universalDist": false,
     "mac": {
   "target": [
     {
@@ -33,6 +32,7 @@
     }
   ],
   "icon": "resources/iconMac.icns",
+  "artifactName": "Ragpiq.Link.Setup.dmg",
   "hardenedRuntime": true,
   "entitlements": "build/entitlements.mac.plist",
   "entitlementsInherit": "build/entitlements.mac.plist",
