@@ -1,6 +1,7 @@
 {
   "name": "ragpiq-link",
   "version": "2.0.0",
+  "artifactName": "Ragpiq.Link.Setup.${ext}",
   "description": "Ragpiq Link Desktop App",
   "main": "src/main/index.js",
   "author": "Ragpiq Pty Ltd",
