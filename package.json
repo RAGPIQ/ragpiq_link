@@ -12,7 +12,7 @@
     "dist": "electron-builder"
   },
   "build": {
-    "appId": "com.ragpiq.link",
+    "appId": "com.ragpiq.desktoplink",
     "productName": "Ragpiq Link",
     "copyright": "Copyright © 2025 Ragpiq",
     "asarUnpack": ["src/scripts/**"],
@@ -25,12 +25,18 @@
     "publish": null,
     "mac": {
               "target": ["dmg"],
-              "icon": "resources/iconMac.icns"
+              "icon": "resources/iconMac.icns",
+              "hardenedRuntime": true,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist",
+    "category": "public.app-category.productivity",
+    "notarize": true
     },
     "win": {
       "target": ["nsis"],
       "icon": "resources/icon.ico"
-    }
+    },
+    "afterSign": "build/notarize.js"
   },
   "dependencies": {
     "electron-updater": "^5.3.0"
