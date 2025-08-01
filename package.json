@@ -16,7 +16,14 @@
     "productName": "Ragpiq Link",
     "artifactName": "Ragpiq.Link.Setup.${ext}",
     "copyright": "Copyright © 2025 Ragpiq",
-    "asarUnpack": ["src/scripts/**"],
+    "extraResources": [
+    {
+      "from": "portable-python",
+      "to": "python"
+    }
+  ],
+    "asarUnpack": ["src/scripts/**",
+                    "portable-python/**"],
     "files": [
       "**/*"
     ],

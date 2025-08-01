@@ -1,4 +1,5 @@
 import sys
+import os
 from brother_ql.raster import BrotherQLRaster
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
@@ -21,19 +22,20 @@ TOP_GROUP_WIDTH = int(LABEL_WIDTH * 0.85)
 PDF417_WIDTH = int(LABEL_WIDTH * 1.10)
 PDF417_HEIGHT = 230
 
-def get_resized_font(text, max_width, font_path="arialbd.ttf"):
+def get_resized_font(text, max_width, font_path=None):
+    if font_path is None:
+        font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arialbd.ttf')
+    
     size = 10
     while True:
         try:
             font = ImageFont.truetype(font_path, size)
-        except:
+        except Exception:
             font = ImageFont.load_default()
-        bbox = ImageDraw.Draw(Image.new("1", (1, 1))).textbbox((0, 0), text, font=font)
-        if bbox[2] - bbox[0] >= max_width and size > 1:
-            return ImageFont.truetype(font_path, size - 1)
-        elif bbox[2] - bbox[0] >= max_width:
-            return font
+        if font.getsize(text)[0] > max_width:
+            break
         size += 1
+    return font
 
 def create_label_image(text1, qr_data, text2, pdf_data, width=LABEL_WIDTH, height=LABEL_HEIGHT):
     img = Image.new('1', (width, height), 1)

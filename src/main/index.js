@@ -4,12 +4,37 @@ const { spawn } = require('child_process');
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const isMac = process.platform === 'darwin';
+const isWin = process.platform === 'win32';
 
 let win;
 let splash;
 let printerWatcherProcess = null;
 let storedCameraId = null;
 let isQuitting = false;
+
+const getPythonPath = () => {
+  if (isMac) {
+    return path.join(
+      process.resourcesPath,
+      'python',
+      'mac',
+      'Library',
+      'Frameworks',
+      'Python.framework',
+      'Versions',
+      '3.13',
+      'bin',
+      'python3'
+    );
+  }
+
+  if (isWin) {
+    return path.join(process.resourcesPath, 'python', 'win', 'python.exe');
+  }
+
+  return 'python3'; // fallback for dev
+};
 
 // 🎯 Determine correct script path based on env
 const isDev = !app.isPackaged;
@@ -134,7 +159,7 @@ ipcMain.handle('start-printer-watcher', async () => {
   const detectPrinterPath = getScriptPath('detect_printer.py');
   console.log("🧩 Starting printer watcher from path:", detectPrinterPath);
 
-  printerWatcherProcess = spawn('python', [detectPrinterPath]);
+  printerWatcherProcess = spawn(getPythonPath(), [detectPrinterPath]);
 
   printerWatcherProcess.on('error', (err) => {
     console.error("❌ Spawn error (printer watcher):", err);
@@ -185,7 +210,7 @@ ipcMain.handle('print-label', async (event, label) => {
     const labelPrintPath = getScriptPath('label_print.py');
     console.log("🏷️ Printing label via:", labelPrintPath);
 
-    const python = spawn('python', [labelPrintPath, label.qr, label.barcode, label.created]);
+    const python = spawn(getPythonPath(), [labelPrintPath, label.qr, label.barcode, label.created]);
 
     python.on('error', (err) => {
       console.error("❌ Spawn error (label print):", err);
