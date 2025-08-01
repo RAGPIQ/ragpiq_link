@@ -38,7 +38,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
 
       - name: Build Electron app
-        run: npm run dist
+        run: npm run dist -- --config.debug=true
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
@@ -50,9 +50,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            dist/**/*.dmg
-            dist/**/*.exe
-            dist/**/*.zip
+            dist/**/Ragpiq*.dmg
+            dist/**/Ragpiq*.exe
+            dist/**/Ragpiq*.zip
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
