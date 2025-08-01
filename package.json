@@ -22,19 +22,24 @@
       "to": "python"
     }
   ],
-    "asarUnpack": ["src/scripts/**",
-                    "portable-python/**"],
+    "asarUnpack": [
+  "src/scripts",
+  "portable-python/mac/Library/Frameworks/Versions/3.13/bin",
+  "portable-python/mac/Library/Frameworks/Versions/3.13/lib"
+],
     "files": [
-      "**/*",
+  "**/*",
   "!**/._*",
   "!**/*.pyc",
   "!**/*.pyo",
   "!**/__pycache__/**",
-  "!**/test/**",
-  "!**/tests/**",
+  "!**/*.egg-info/**",
+  "!**/test*/**",
   "!**/config-3.13-darwin/**",
-  "!**/lib-dynload/**"
-    ],
+  "!**/lib-dynload/**",
+  "!**/bin/python3.13",
+  "!**/lib/python3.13/config-3.13-darwin/._python.o"
+],
     "directories": {
       "buildResources": "resources"
     },
