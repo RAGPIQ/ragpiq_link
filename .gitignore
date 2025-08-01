@@ -1,0 +1,23 @@
+# Node
+node_modules/
+dist/
+*.log
+
+# Runtime payloads – kept outside Git
+portable-python/
+
+# OS junk
+.DS_Store
+**/._*
+desktop.ini
+Thumbs.db
+
+# Git itself (avoid packing repo history into app.asar)
+.git
+.git/**
+
+# Build artefacts dropped by electron-builder / code-signing
+*.dmg
+*.exe
+*.zip
+*.tar
