@@ -38,7 +38,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
 
       - name: Build Electron app
-        run: npm run dist -- --config.debug=true
+        run: npm run dist
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
