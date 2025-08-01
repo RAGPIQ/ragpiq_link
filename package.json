@@ -25,7 +25,8 @@
     "asarUnpack": ["src/scripts/**",
                     "portable-python/**"],
     "files": [
-      "**/*"
+      "**/*",
+      "!**/._*"
     ],
     "directories": {
       "buildResources": "resources"
