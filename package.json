@@ -26,7 +26,14 @@
                     "portable-python/**"],
     "files": [
       "**/*",
-      "!**/._*"
+  "!**/._*",
+  "!**/*.pyc",
+  "!**/*.pyo",
+  "!**/__pycache__/**",
+  "!**/test/**",
+  "!**/tests/**",
+  "!**/config-3.13-darwin/**",
+  "!**/lib-dynload/**"
     ],
     "directories": {
       "buildResources": "resources"
