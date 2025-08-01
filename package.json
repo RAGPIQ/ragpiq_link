@@ -44,7 +44,10 @@
   "hardenedRuntime": true,
   "entitlements": "build/entitlements.mac.plist",
   "entitlementsInherit": "build/entitlements.mac.plist",
-  "category": "public.app-category.productivity"
+  "category": "public.app-category.productivity",
+  "x64ArchFiles": [
+    "Resources/python/mac/Library/Frameworks/Versions/3.13/Python"
+  ]
 },
     "win": {
       "target": ["nsis"],
