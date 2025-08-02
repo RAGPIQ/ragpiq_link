@@ -150,11 +150,15 @@ app.on('will-quit', (event) => {
   event.preventDefault();
   isQuitting = true;
 
-  if (printerWatcherProcess) {
-    console.log("🛑 Terminating printer watcher...");
-    printerWatcherProcess.kill();
+ if (printerWatcherProcess) {
+  console.log("🛑 Terminating printer watcher...");
+
+  printerWatcherProcess.kill();
+  printerWatcherProcess.on('close', () => {
     printerWatcherProcess = null;
-  }
+    console.log("✅ Printer watcher closed cleanly.");
+  });
+}
 
   if (storedCameraId) {
     console.log("📡 Sending camera ID before quit...");

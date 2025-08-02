@@ -100,16 +100,21 @@ if __name__ == "__main__":
         print("Usage: python label_print.py <qrcode> <barcode> <created>")
         sys.exit(1)
 
-    qrcode_val = sys.argv[1]
-    barcode_val = sys.argv[2]
-    created_val = sys.argv[3]
+    try:
+        qrcode_val = sys.argv[1]
+        barcode_val = sys.argv[2]
+        created_val = sys.argv[3]
 
-    label_img = create_label_image(
-        text1="RAGPIQ",
-        qr_data=qrcode_val,
-        text2=created_val,
-        pdf_data=barcode_val
-    )
+        label_img = create_label_image(
+            text1="RAGPIQ",
+            qr_data=qrcode_val,
+            text2=created_val,
+            pdf_data=barcode_val
+        )
 
-    print_label(label_img)
-    print("Printed label successfully.")
+        print_label(label_img)
+        print("Printed label successfully.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"❌ Error during label generation/printing: {e}", file=sys.stderr)
+        sys.exit(2)

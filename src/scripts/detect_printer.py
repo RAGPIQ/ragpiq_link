@@ -3,6 +3,14 @@ import platform
 import json
 import re
 import time
+import signal
+import sys
+
+def handle_sigterm(sig, frame):
+    print("Watcher received SIGTERM, exiting.", flush=True)
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, handle_sigterm)
 
 def check_driver_type_windows(device_name):
     try:
