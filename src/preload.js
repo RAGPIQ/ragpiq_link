@@ -13,10 +13,16 @@ contextBridge.exposeInMainWorld('ragpiqBridge', {
   },
 
   onLabelLog: (callback) => {
+    ipcRenderer.removeAllListeners('label-log'); // Prevent accumulation
     ipcRenderer.on('label-log', (_event, args) => callback(args));
+
+    return () => ipcRenderer.removeListener('label-log', callback);
   },
 
   onPrinterStatus: (callback) => {
+    ipcRenderer.removeAllListeners('printer-status'); // Prevent accumulation
     ipcRenderer.on('printer-status', (_event, args) => callback(args));
+
+    return () => ipcRenderer.removeListener('printer-status', callback);
   }
 });

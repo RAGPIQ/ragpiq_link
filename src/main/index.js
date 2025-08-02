@@ -1,3 +1,26 @@
+// 🔍 async_hooks logger for SIGTRAP debugging
+const async_hooks = require('async_hooks');
+const fs = require('fs');
+
+const logFile = fs.openSync('async-debug.log', 'w');
+
+const hook = async_hooks.createHook({
+  init(asyncId, type, triggerAsyncId) {
+    fs.writeSync(logFile, `INIT ${asyncId} ${type} triggered by ${triggerAsyncId}\n`);
+  },
+  before(asyncId) {
+    fs.writeSync(logFile, `BEFORE ${asyncId}\n`);
+  },
+  after(asyncId) {
+    fs.writeSync(logFile, `AFTER ${asyncId}\n`);
+  },
+  destroy(asyncId) {
+    fs.writeSync(logFile, `DESTROY ${asyncId}\n`);
+  }
+});
+
+hook.enable();
+
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -67,6 +90,11 @@ function sendCameraIdToServer(cameraId) {
   req.end();
 }
 
+setInterval(() => {
+  const mem = process.memoryUsage();
+  console.log(`📊 Heap used: ${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB`);
+}, 5000);
+
 function createWindow() {
   splash = new BrowserWindow({
     width: 500,
@@ -119,29 +147,36 @@ app.on('window-all-closed', () => {
 app.on('will-quit', (event) => {
   if (isQuitting) return;
 
-  if (printerWatcherProcess && storedCameraId) {
-    console.log("🛑 App closing, printer watcher running — sending camera ID...");
+  event.preventDefault();
+  isQuitting = true;
 
-    event.preventDefault();
-    isQuitting = true;
+  if (printerWatcherProcess) {
+    console.log("🛑 Terminating printer watcher...");
+    printerWatcherProcess.kill();
+    printerWatcherProcess = null;
+  }
+
+  if (storedCameraId) {
+    console.log("📡 Sending camera ID before quit...");
 
     const url = new URL('https://n8n2.ragpiq.com/6315c648-8d7e-4273-8c8b-669164a2fce3');
     url.searchParams.append('camera_id', storedCameraId);
 
     const lib = url.protocol === 'https:' ? https : http;
     const req = lib.get(url.toString(), (res) => {
-      console.log(`📡 Camera ID sent. Status: ${res.statusCode}`);
-      app.quit();
+      console.log(`✅ Camera ID sent. Status: ${res.statusCode}`);
+      app.quit(); // Safe to call now
     });
 
     req.on('error', (err) => {
       console.error("❌ Failed to send camera ID:", err);
-      app.quit();
+      app.quit(); // Still proceed to quit
     });
 
     req.end();
   } else {
-    console.log("ℹ️ Skipping camera ID webhook (either printer watcher not running or camera ID not set)");
+    console.log("ℹ️ No camera ID set, quitting immediately.");
+    app.quit();
   }
 });
 
@@ -170,19 +205,21 @@ ipcMain.handle('start-printer-watcher', async () => {
   });
 
   printerWatcherProcess.stdout.on('data', (data) => {
-    try {
-      const msg = data.toString().trim();
-      console.log(`[PRINTER WATCHER] ${msg}`);
-      const parsed = JSON.parse(msg);
+  try {
+    const msg = data.toString().trim();
+    console.log(`[PRINTER WATCHER] ${msg}`);
+    const parsed = JSON.parse(msg);
 
+    if (win && !win.isDestroyed()) {
       win.webContents.send('printer-status', {
         printer_name: parsed.printer_name || "",
         setup_required: parsed.setup_required,
       });
-    } catch (err) {
-      console.error("❌ Failed to parse printer update:", data.toString());
     }
-  });
+  } catch (err) {
+    console.error("❌ Failed to parse printer update:", data.toString());
+  }
+});
 
   printerWatcherProcess.stderr.on('data', (data) => {
     console.error(`[PRINTER WATCHER ERROR] ${data}`);
@@ -232,24 +269,28 @@ ipcMain.handle('print-label', async (event, label) => {
     });
 
     python.on('close', (code) => {
-      if (code === 0) {
-        win.webContents.send('label-log', {
-          type: 'success',
-          message: stdoutBuffer.trim()
-        });
-      } else {
-        let errorMessage = "Failed to print label.";
-        if (stderrBuffer.includes("Device not found")) {
-          errorMessage = "Label printer not connected.";
-        }
+  if (code === 0) {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('label-log', {
+        type: 'success',
+        message: stdoutBuffer.trim()
+      });
+    }
+  } else {
+    let errorMessage = "Failed to print label.";
+    if (stderrBuffer.includes("Device not found")) {
+      errorMessage = "Label printer not connected.";
+    }
 
-        win.webContents.send('label-log', {
-          type: 'error',
-          message: errorMessage
-        });
-      }
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('label-log', {
+        type: 'error',
+        message: errorMessage
+      });
+    }
+  }
 
-      resolve();
-    });
+  resolve();
+});
   });
 });
