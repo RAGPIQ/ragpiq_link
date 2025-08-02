@@ -7,6 +7,10 @@ const { URL } = require('url');
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 
+if (isMac) {
+  app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096');
+}
+
 let win;
 let splash;
 let printerWatcherProcess = null;
