@@ -1,0 +1,81 @@
+{
+  "name": "ragpiq-link",
+  "version": "2.0.0",
+  "description": "Ragpiq Link Desktop App",
+  "main": "src/main/index.js",
+  "author": "Ragpiq Pty Ltd",
+  "asar": true,
+  "license": "ISC",
+  "scripts": {
+    "start": "npx electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.ragpiq.desktoplink",
+    "productName": "Ragpiq Link",
+    "artifactName": "Ragpiq.Link.Setup.${ext}",
+    "copyright": "Copyright © 2025 Ragpiq",
+    "extraResources": [
+    {
+      "from": "portable-python",
+      "to": "python"
+    }
+  ],
+    "asarUnpack": [
+  "src/scripts",
+  "portable-python/mac/Library/Frameworks/Versions/3.13/bin",
+  "portable-python/mac/Library/Frameworks/Versions/3.13/lib"
+],
+    "files": [
+  "**/*",
+  "!portable-python/**/*",
+  "!.git",
+  "!.git/**",
+  "!.github",
+  "!.github/**",
+  "!**/._*",
+  "!**/*.pyc",
+  "!**/*.pyo",
+  "!**/.DS_Store",
+  "!**/__pycache__/**",
+  "!**/*.egg-info/**",
+  "!**/test*/**",
+  "!**/config-3.13-darwin/**",
+  "!**/lib-dynload/**",
+  "!**/bin/python3.13",
+  "!**/lib/python3.13/config-3.13-darwin/._python.o"
+],
+    "directories": {
+      "buildResources": "resources"
+    },
+    "publish": null,
+    "mac": {
+  "target": [
+    {
+      "target": "dmg",
+      "arch": "universal"
+    }
+  ],
+  "icon": "resources/iconMac.icns",
+  "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
+  "hardenedRuntime": true,
+  "entitlements": "build/entitlements.mac.plist",
+  "entitlementsInherit": "build/entitlements.mac.plist",
+  "category": "public.app-category.productivity",
+  "x64ArchFiles": "Contents/Resources/python/mac/Library/Frameworks/Versions/3.13/**"
+},
+    "win": {
+      "target": ["nsis"],
+      "icon": "resources/icon.ico"
+    },
+  "afterSign": "build/notarize.js"
+  },
+  "dependencies": {
+    "electron-updater": "^5.3.0"
+  },
+  "devDependencies": {
+    "electron": "27.1.3",
+    "electron-builder": "24.12.0"
+  }
+}
