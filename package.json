@@ -63,6 +63,7 @@
   "entitlements": "build/entitlements.mac.plist",
   "entitlementsInherit": "build/entitlements.mac.plist",
   "category": "public.app-category.productivity",
+  "executableName": "Ragpiq Link",
   "x64ArchFiles": "Contents/Resources/python/mac/Library/Frameworks/Versions/3.13/**"
 },
     "win": {
