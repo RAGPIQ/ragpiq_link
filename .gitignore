@@ -3,9 +3,6 @@ node_modules/
 dist/
 *.log
 
-# Runtime payloads – kept outside Git
-portable-python/
-
 # OS junk
 .DS_Store
 **/._*

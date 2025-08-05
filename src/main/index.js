@@ -40,27 +40,21 @@ let printerWatcherProcess = null;
 let storedCameraId = null;
 let isQuitting = false;
 
+
 const getPythonPath = () => {
   if (isMac) {
-    return path.join(
-      process.resourcesPath,
-      'python',
-      'mac',
-      'Library',
-      'Frameworks',
-      'Python.framework',
-      'Versions',
-      '3.13',
-      'bin',
-      'python3'
-    );
+    return isDev
+      ? path.join(__dirname, '..', '..', 'portable-python', 'mac', 'Library', 'Frameworks', '3.13', 'bin', 'python3')
+      : path.join(process.resourcesPath, 'python', 'mac', 'Library', 'Frameworks', '3.13', 'bin', 'python3');
   }
 
   if (isWin) {
-    return path.join(process.resourcesPath, 'python', 'win', 'python.exe');
+    return isDev
+      ? path.join(__dirname, '..', '..', 'portable-python', 'win', 'python.exe')
+      : path.join(process.resourcesPath, 'python', 'win', 'python.exe');
   }
 
-  return 'python3'; // fallback for dev
+  return 'python3';
 };
 
 // 🎯 Determine correct script path based on env
@@ -89,11 +83,6 @@ function sendCameraIdToServer(cameraId) {
 
   req.end();
 }
-
-setInterval(() => {
-  const mem = process.memoryUsage();
-  console.log(`📊 Heap used: ${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB`);
-}, 5000);
 
 function createWindow() {
   splash = new BrowserWindow({
@@ -136,6 +125,12 @@ function createWindow() {
       win.show();
     }, 1000);
   });
+
+  // Handle close event for macOS to quit app
+  win.on('close', () => {
+    app.quit();
+    app.exit(); // Quit the app when the window is closed
+  });
 }
 
 app.whenReady().then(createWindow);
@@ -150,42 +145,84 @@ app.on('will-quit', (event) => {
   event.preventDefault();
   isQuitting = true;
 
- if (printerWatcherProcess) {
-  console.log("🛑 Terminating printer watcher...");
+  // Stop printer watcher
+  if (printerWatcherProcess) {
+    console.log("🛑 Terminating printer watcher...");
+    printerWatcherProcess.kill();
+    printerWatcherProcess.on('close', () => {
+      printerWatcherProcess = null;
+      console.log("✅ Printer watcher closed cleanly.");
+      
+      // Send camera ID before quitting
+      if (storedCameraId) {
+        console.log("📡 Sending camera ID before quit...");
 
-  printerWatcherProcess.kill();
-  printerWatcherProcess.on('close', () => {
-    printerWatcherProcess = null;
-    console.log("✅ Printer watcher closed cleanly.");
-  });
-}
+        const url = new URL('https://n8n2.ragpiq.com/6315c648-8d7e-4273-8c8b-669164a2fce3');
+        url.searchParams.append('camera_id', storedCameraId);
 
-  if (storedCameraId) {
-    console.log("📡 Sending camera ID before quit...");
+        const lib = url.protocol === 'https:' ? https : http;
+        const req = lib.get(url.toString(), (res) => {
+          console.log(`✅ Camera ID sent. Status: ${res.statusCode}`);
+          app.quit(); // Safe to call now
+        });
 
-    const url = new URL('https://n8n2.ragpiq.com/6315c648-8d7e-4273-8c8b-669164a2fce3');
-    url.searchParams.append('camera_id', storedCameraId);
+        req.on('error', (err) => {
+          console.error("❌ Failed to send camera ID:", err);
+          app.quit(); // Still proceed to quit
+        });
 
-    const lib = url.protocol === 'https:' ? https : http;
-    const req = lib.get(url.toString(), (res) => {
-      console.log(`✅ Camera ID sent. Status: ${res.statusCode}`);
-      app.quit(); // Safe to call now
+        req.end();
+      } else {
+        console.log("ℹ️ No camera ID set, quitting immediately.");
+        app.quit();
+      }
     });
-
-    req.on('error', (err) => {
-      console.error("❌ Failed to send camera ID:", err);
-      app.quit(); // Still proceed to quit
-    });
-
-    req.end();
   } else {
-    console.log("ℹ️ No camera ID set, quitting immediately.");
-    app.quit();
+    // No printer watcher, quit immediately
+    // Send camera ID before quitting
+    if (storedCameraId) {
+      console.log("📡 Sending camera ID before quit...");
+
+      const url = new URL('https://n8n2.ragpiq.com/6315c648-8d7e-4273-8c8b-669164a2fce3');
+      url.searchParams.append('camera_id', storedCameraId);
+
+      const lib = url.protocol === 'https:' ? https : http;
+      const req = lib.get(url.toString(), (res) => {
+        console.log(`✅ Camera ID sent. Status: ${res.statusCode}`);
+        app.quit(); // Safe to call now
+      });
+
+      req.on('error', (err) => {
+        console.error("❌ Failed to send camera ID:", err);
+        app.quit(); // Still proceed to quit
+      });
+
+      req.end();
+    } else {
+      console.log("ℹ️ No camera ID set, quitting immediately.");
+      app.quit();
+    }
   }
 });
 
 ipcMain.on('app-exit', () => {
-  app.quit();
+  console.log("🛑 Exiting application...");
+
+  // Terminate the printer watcher before quitting
+  if (printerWatcherProcess) {
+    console.log("🛑 Terminating printer watcher...");
+    printerWatcherProcess.kill();
+    printerWatcherProcess.on('close', () => {
+      printerWatcherProcess = null;
+      console.log("✅ Printer watcher closed cleanly.");
+      app.quit();  // After cleanup, quit the app
+      app.exit();  // Forcefully exit the app
+    });
+  } else {
+    // No printer watcher, quit immediately
+    app.quit();
+    app.exit();  // Forcefully exit the app
+  }
 });
 
 ipcMain.on('open-external', (event, url) => {
@@ -202,7 +239,15 @@ ipcMain.handle('start-printer-watcher', async () => {
   const detectPrinterPath = getScriptPath('detect_printer.py');
   console.log("🧩 Starting printer watcher from path:", detectPrinterPath);
 
-  printerWatcherProcess = spawn(getPythonPath(), [detectPrinterPath]);
+  printerWatcherProcess = spawn(getPythonPath(), [detectPrinterPath], {
+  env: {
+    ...process.env,
+    ...(isMac && !isDev ? {
+      DYLD_LIBRARY_PATH: path.join(process.resourcesPath)
+    } : {})
+  }
+});
+
 
   printerWatcherProcess.on('error', (err) => {
     console.error("❌ Spawn error (printer watcher):", err);
@@ -255,7 +300,15 @@ ipcMain.handle('print-label', async (event, label) => {
     const labelPrintPath = getScriptPath('label_print.py');
     console.log("🏷️ Printing label via:", labelPrintPath);
 
-    const python = spawn(getPythonPath(), [labelPrintPath, label.qr, label.barcode, label.created]);
+    const python = spawn(getPythonPath(), [labelPrintPath, label.qr, label.barcode, label.created], {
+  env: {
+    ...process.env,
+    ...(isMac && !isDev ? {
+      DYLD_LIBRARY_PATH: path.join(process.resourcesPath)
+    } : {})
+  }
+});
+
 
     python.on('error', (err) => {
       console.error("❌ Spawn error (label print):", err);

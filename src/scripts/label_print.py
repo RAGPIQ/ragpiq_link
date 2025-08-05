@@ -7,6 +7,8 @@ from PIL import Image, ImageDraw, ImageFont
 import qrcode
 import pdf417gen
 
+os.environ["DYLD_LIBRARY_PATH"] = os.path.abspath("./portable-python/mac/libusb")
+
 # Compatibility patch for Pillow >=10.0.0
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.Resampling.LANCZOS
@@ -25,16 +27,25 @@ PDF417_HEIGHT = 230
 def get_resized_font(text, max_width, font_path=None):
     if font_path is None:
         font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arialbd.ttf')
-    
+
     size = 10
     while True:
         try:
             font = ImageFont.truetype(font_path, size)
+            bbox = font.getbbox(text)
+            text_width = bbox[2] - bbox[0]
         except Exception:
             font = ImageFont.load_default()
-        if font.getsize(text)[0] > max_width:
+            try:
+                bbox = font.getbbox(text)
+                text_width = bbox[2] - bbox[0]
+            except Exception:
+                text_width = 9999  # fallback in worst case
+
+        if text_width > max_width:
             break
         size += 1
+
     return font
 
 def create_label_image(text1, qr_data, text2, pdf_data, width=LABEL_WIDTH, height=LABEL_HEIGHT):
@@ -44,7 +55,9 @@ def create_label_image(text1, qr_data, text2, pdf_data, width=LABEL_WIDTH, heigh
     # Fonts
     header_font = get_resized_font(text1, TOP_GROUP_WIDTH)
     date_font = get_resized_font(text2, TOP_GROUP_WIDTH)
-    header_h = draw.textbbox((0, 0), text1, font=header_font)[3]
+    bbox = draw.textbbox((0, 0), text1, font=header_font)
+    header_h = bbox[3] - bbox[1]
+
 
     # QR Code
     qr = qrcode.QRCode(border=0)

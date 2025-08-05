@@ -37,39 +37,49 @@ def scan_usb_devices_windows():
 
 def scan_usb_devices_unix():
     try:
-        output = subprocess.check_output(["lsusb"], text=True)
+        # Use system_profiler to list USB devices, which is more reliable on macOS
+        output = subprocess.check_output(["system_profiler", "SPUSBDataType"], stderr=subprocess.PIPE, text=True)
         return output
-    except Exception:
-        return ""
+    except subprocess.CalledProcessError as e:
+        # Ignore specific error message related to IOCreatePlugInInterfaceForService failure
+        if 'SPUSBDevice: IOCreatePlugInInterfaceForService failed' in e.stderr:
+            # Print nothing or return an empty string to suppress the error
+            return ""
+        else:
+            # Log other errors
+            return f"Error: {e.stderr}"
+    except Exception as e:
+        # Catch all other exceptions that may arise
+        return f"Unexpected error: {str(e)}"
 
 def detect_ql_printers(output, system):
     ql_keywords = ["QL", "Brother"]
-    ql_lines = [line.strip() for line in output.splitlines() if any(k in line for k in ql_keywords)]
     printers = []
 
-    for line in ql_lines:
-        match = re.search(r'Brother.*QL-\d+\w*', line)
-        printer_name = match.group(0) if match else "Brother QL Printer"
+    if system == "Darwin":  # macOS-specific
+        # Look for Brother QL printer in the system_profiler output
+        for line in output.splitlines():
+            if any(keyword in line for keyword in ql_keywords):
+                printer_name = line.strip()  # Capture printer name
+                printers.append({
+                    "platform": system.lower(),
+                    "printer_name": printer_name,
+                    "driver": None,  # No specific driver info for now
+                    "setup_required": False  # Assuming setup is not required if the printer is detected
+                })
 
-        driver_info = None
-        setup_required = True
-
-        if system == "Windows":
-            driver_info = check_driver_type_windows("QL")
-            if isinstance(driver_info, list):
-                for d in driver_info:
-                    if d.get("Class", "").lower() == "libusbk devices" and d.get("Status", "").lower() == "ok":
-                        setup_required = False
-                        break
-        else:
-            setup_required = True  # default for Unix-like systems
-
-        printers.append({
-            "platform": system.lower(),
-            "printer_name": printer_name,
-            "driver": driver_info,
-            "setup_required": setup_required
-        })
+    else:
+        # Use existing code for non-macOS systems
+        ql_lines = [line.strip() for line in output.splitlines() if any(k in line for k in ql_keywords)]
+        for line in ql_lines:
+            match = re.search(r'Brother.*QL-\d+\w*', line)
+            printer_name = match.group(0) if match else "Brother QL Printer"
+            printers.append({
+                "platform": system.lower(),
+                "printer_name": printer_name,
+                "driver": None,
+                "setup_required": True
+            })
 
     return printers
 

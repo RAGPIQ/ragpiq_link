@@ -20,6 +20,10 @@
       {
         "from": "portable-python",
         "to": "python"
+      },
+      {
+        "from": "portable-python/mac/libusb/libusb-1.0.dylib",
+        "to": "libusb-1.0.dylib"
       }
     ],
     "asarUnpack": [
@@ -82,6 +86,7 @@
     "electron-updater": "^5.3.0"
   },
   "devDependencies": {
+    "cross-env": "^10.0.0",
     "electron": "^27.1.3",
     "electron-builder": "24.12.0"
   }
