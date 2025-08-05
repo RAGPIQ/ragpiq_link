@@ -37,6 +37,11 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MAC_P12_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
 
+      - name: Download portable-python from GitHub release
+        run: |
+          curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip
+          unzip -q portable-python.zip
+
       - name: Build Electron app
         run: npm run dist
         env:
