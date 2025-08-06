@@ -26,7 +26,7 @@ exports.default = async function afterSign(context) {
     'gatekeeper-assess': false,
     'strict-verification': false,
     filter: (filePath) => {
-      const skipExts = ['.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg', '.jpg', '.png', '.gif', '.tiff'];
+      const skipExts = ['.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg', '.jpg', '.png', '.gif', '.tiff', '.a'];
       return !skipExts.some(ext => filePath.endsWith(ext));
     }
   });
