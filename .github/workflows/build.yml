@@ -36,6 +36,13 @@ jobs:
           curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip
           unzip -q portable-python.zip
       
+      - name: Clean extraResources for macOS
+        if: runner.os == 'macOS'
+        run: |
+          find portable-python/mac -name '*.py' -delete
+          find portable-python/mac -name '*.txt' -delete
+          find portable-python/mac -name '*.rst' -delete
+
       - name: Cleanup portable-python
         run: |
           find portable-python -name '__pycache__' -exec rm -rf {} +
