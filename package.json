@@ -72,8 +72,7 @@
         "CFBundleExecutable": "Ragpiq Link",
         "CFBundleName": "Ragpiq Link",
         "CFBundleDisplayName": "Ragpiq Link"
-      },
-      "x64ArchFiles": "Contents/Resources/**"
+      }
     },
     "win": {
       "target": [

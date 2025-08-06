@@ -3,15 +3,11 @@ name: Build and Publish Electron App
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers only when you push a version tag like v1.0.0
+      - 'v*.*.*'
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest]
-
+  build-macos:
+    runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -25,12 +21,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-      
-      - name: Ensure correct electron-builder version
+
+      - name: Install electron-builder
         run: npm install electron-builder@24.12.0
 
-      - name: Set up keychain for macOS signing
-        if: matrix.os == 'macos-latest'
+      - name: Setup macOS signing keychain
         run: |
           echo "${{ secrets.MAC_P12_BASE64 }}" | base64 --decode > certificate.p12
           security create-keychain -p "buildkey" build.keychain
@@ -40,25 +35,47 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
 
       - name: Download and extract portable-python
-        shell: bash
         run: |
-          echo "📦 Downloading portable-python.zip..."
           curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip
+          unzip -q portable-python.zip
 
-          echo "📂 Unzipping..."
-          unzip -q portable-python.zip || { echo "❌ Unzip failed"; exit 1; }
+      - name: Build x64 app
+        run: electron-builder --mac --x64
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-          if [ ! -d "portable-python" ]; then
-            echo "❌ portable-python folder not found after unzip"
-            exit 1
-          fi
+      - name: Build arm64 app
+        run: electron-builder --mac --arm64
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-          echo "✅ portable-python successfully extracted:"
-          ls -la portable-python
+      - name: Merge dylibs recursively into universal
+        run: |
+          set -euo pipefail
+          APP_X64="dist/mac-x64/Ragpiq Link.app"
+          APP_ARM="dist/mac-arm64/Ragpiq Link.app"
+          OUT="dist/universal"
 
+          rsync -a --delete "$APP_ARM/Contents/Resources/" "$OUT/Contents/Resources/"
 
-      - name: Build Electron app
-        run: npm run dist
+          find "$APP_X64/Contents/Resources" -name '*.dylib' | while read f; do
+            rel="${f#"$APP_X64/"}"
+            other="$APP_ARM/$rel"
+            out="$OUT/$rel"
+            mkdir -p "$(dirname "$out")"
+            if [[ -f "$other" ]]; then
+              lipo -create "$f" "$other" -output "$out" || cp "$f" "$out"
+            else
+              cp "$f" "$out"
+            fi
+          done
+
+      - name: Build universal app
+        run: |
+          electron-builder \
+            --mac universal \
+            --universal-arch-paths dist/mac-arm64 dist/mac-x64 \
+            --universal-extra-files dist/universal
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -66,14 +83,48 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           NOTARIZE_APP_BUNDLE_ID: ${{ secrets.NOTARIZE_APP_BUNDLE_ID }}
 
-      - name: Publish release
+      - name: Upload macOS Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             dist/**/Ragpiq*.dmg
-            dist/**/Ragpiq*.exe
-            dist/**/Ragpiq*.zip
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install electron-builder
+        run: npm install electron-builder@24.12.0
+
+      - name: Download and extract portable-python
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip" -OutFile "portable-python.zip"
+          Expand-Archive -Path "portable-python.zip" -DestinationPath "."
+
+      - name: Build Windows app
+        run: electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Upload Windows Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/**/Ragpiq*.exe
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
