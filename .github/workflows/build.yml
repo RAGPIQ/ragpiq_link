@@ -56,15 +56,15 @@ jobs:
       - name: Clean portable-python for macOS
         if: runner.os == 'macOS'
         run: |
-          # Remove irrelevant source files and documentation
+          # Remove unneeded files and directories
           find portable-python/mac -name '__pycache__' -exec rm -rf {} +
           find portable-python/mac -type f \( -name '*.pyc' -o -name '*.pyo' -o -name '*.py' -o -name '*.txt' -o -name '*.rst' -o -name '*.md' \) -delete
           find portable-python/mac -type d -name 'test*' -exec rm -rf {} +
-          find portable-python/mac -type f \( -name '*.gif' -o -name '*.png' -o -name '*.tcl' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.exe' -o -name '*.dll' -o -name '*.pyd' -o -name '*.bat' -o -name '*.pak' \) -delete
+          find portable-python/mac -type f \( -name '*.gif' -o -name '*.png' -o -name '*.tcl' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.exe' -o -name '*.dll' -o -name '*.pyd' -o -name '*.bat' -o -name '*.pak' -o -name '*.icns' \) -delete
           find portable-python/mac -path '*/share/*' -exec rm -rf {} +
           find portable-python/mac -path '*/doc/*' -exec rm -rf {} +
 
-          # Strip executable permission from non-binaries
+          # Remove executable bit from non-binaries
           find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" -exec chmod -x {} +
 
       - name: Build x64 app
