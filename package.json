@@ -54,7 +54,9 @@
       "**/*.png",
       "**/*.jpg",
       "**/*.jpeg",
-      "**/*.tcl"
+      "**/*.tcl",
+      "!**/share/**",
+      "!**/doc/**"
     ],
     "directories": {
       "buildResources": "resources"
