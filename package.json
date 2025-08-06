@@ -71,8 +71,6 @@
       "icon": "resources/iconMac.icns",
       "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
       "hardenedRuntime": true,
-
-      "entitlementsInherit": "build/entitlements.mac.plist",
       "category": "public.app-category.productivity",
       "executableName": "Ragpiq Link",
       "extendInfo": {
