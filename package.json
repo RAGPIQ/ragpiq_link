@@ -33,7 +33,8 @@
     ],
     "files": [
       "**/*",
-      "!portable-python/**/*",
+      "!portable-python/mac/Library/Frameworks/3.13/Frameworks/Tcl.framework/PrivateHeaders/**",
+      "!**/PrivateHeaders/**",
       "!.git",
       "!.git/**",
       "!.github",

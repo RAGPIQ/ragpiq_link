@@ -42,7 +42,9 @@ jobs:
       - name: Download portable-python from GitHub release
         run: |
           curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip
-          unzip -q portable-python.zip
+          unzip -q portable-python.zip || (echo "Unzip failed" && exit 1)
+          test -d portable-python || (echo "Folder not found after unzip" && exit 1)
+          ls -la portable-python
 
       - name: Build Electron app
         run: npm run dist
