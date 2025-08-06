@@ -35,6 +35,12 @@ jobs:
         run: |
           curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip
           unzip -q portable-python.zip
+      
+      - name: Cleanup portable-python
+        run: |
+          find portable-python -name '__pycache__' -exec rm -rf {} +
+          find portable-python -name '*.pyc' -delete
+          find portable-python -type d -name 'test*' -exec rm -rf {} +
 
       - name: Build x64 app
         run: npx electron-builder --mac --x64
