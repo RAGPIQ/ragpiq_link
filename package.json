@@ -73,7 +73,8 @@
         "CFBundleName": "Ragpiq Link",
         "CFBundleDisplayName": "Ragpiq Link"
       },
-      "x64ArchFiles": "Contents/Resources/python/mac/Library/Frameworks/Versions/3.13/**"
+      "x64ArchFiles": ["Contents/Resources/libusb-1.0.dylib",
+      "Contents/Resources/python/mac/Library/Frameworks/Versions/3.13/**"]
     },
     "win": {
       "target": [
