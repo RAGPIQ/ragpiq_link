@@ -71,11 +71,9 @@
       "icon": "resources/iconMac.icns",
       "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
       "hardenedRuntime": true,
+
       "entitlementsInherit": "build/entitlements.mac.plist",
       "category": "public.app-category.productivity",
-      "signIgnore": [
-      "python/.*"
-    ],
       "executableName": "Ragpiq Link",
       "extendInfo": {
         "CFBundleExecutable": "Ragpiq Link",
@@ -89,7 +87,7 @@
       ],
       "icon": "resources/icon.ico"
     },
-    "afterSign": "build/notarize.js"
+    "afterSign": "build/afterSign.js"
   },
   "dependencies": {
     "electron-updater": "^5.3.0"
