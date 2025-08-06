@@ -41,6 +41,9 @@ jobs:
           find portable-python -name '__pycache__' -exec rm -rf {} +
           find portable-python -name '*.pyc' -delete
           find portable-python -type d -name 'test*' -exec rm -rf {} +
+          find portable-python -name '*.pyo' -delete
+          find portable-python -name '*.gif' -delete
+          find portable-python -name '*.tcl' -delete
 
       - name: Build x64 app
         run: npx electron-builder --mac --x64
