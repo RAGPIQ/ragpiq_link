@@ -2,6 +2,7 @@
 const path = require('path');
 const { sign } = require('@electron/osx-sign');
 const { notarize } = require('@electron/notarize');
+const { execSync } = require('child_process');
 
 exports.default = async function afterSign(context) {
   const { electronPlatformName, appOutDir } = context;
@@ -24,21 +25,25 @@ exports.default = async function afterSign(context) {
     'gatekeeper-assess': false,
     'strict-verification': false,
     filter: (filePath) => {
-  const skipExts = [
-    '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
-    '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
-  ];
-  const skipNames = [
-    'tkConfig.sh', 'tclConfig.sh', 'tclooConfig.sh', 'libtclstub8.6.a',
-    'Tcl', // <- Exclude this directly
-    'Tk'
-  ];
+      const skipExts = [
+        '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
+        '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
+      ];
+      const skipNames = [
+        'tkConfig.sh', 'tclConfig.sh', 'tclooConfig.sh', 'libtclstub8.6.a',
+        'Tcl', 'Tk'
+      ];
+      return (
+        !skipExts.some(ext => filePath.endsWith(ext)) &&
+        !skipNames.some(name => filePath.endsWith(name))
+      );
+    }
+  });
 
-  return (
-    !skipExts.some(ext => filePath.endsWith(ext)) &&
-    !skipNames.some(name => filePath.endsWith(name))
-  );
-}
+  // 🔁 Final deep codesign pass to eliminate .cstemp + bundle ambiguity
+  console.log('🔁 Running final deep codesign...');
+  execSync(`codesign --deep --force --options runtime --sign "${process.env.CSC_NAME}" "${appPath}"`, {
+    stdio: 'inherit'
   });
 
   console.log(`✅ App signed. Proceeding to notarize...`);
