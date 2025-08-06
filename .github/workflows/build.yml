@@ -63,6 +63,7 @@ jobs:
           find portable-python/mac -type f \( -name '*.gif' -o -name '*.png' -o -name '*.tcl' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.tiff' -o -name '*.exe' -o -name '*.dll' -o -name '*.pyd' -o -name '*.bat' -o -name '*.pak' -o -name '*.icns' \) -delete
           find portable-python/mac -path '*/share/*' -exec rm -rf {} +
           find portable-python/mac -path '*/doc/*' -exec rm -rf {} +
+          find portable-python/mac -name 'tclConfig.sh' -delete
 
           # Remove executable bit from non-binaries
           find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" -exec chmod -x {} +
