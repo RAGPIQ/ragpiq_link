@@ -52,6 +52,7 @@ jobs:
           find portable-python -name '*.md' -delete
           find portable-python -path '*/share/*' -exec rm -rf {} +
           find portable-python -path '*/doc/*' -exec rm -rf {} +
+          find portable-python/mac -name '*.exe' -delete
 
       - name: Build x64 app
         run: npx electron-builder --mac --x64
