@@ -39,12 +39,23 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MAC_P12_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
 
-      - name: Download portable-python from GitHub release
+      - name: Download and extract portable-python
+        shell: bash
         run: |
+          echo "📦 Downloading portable-python.zip..."
           curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip
-          unzip -q portable-python.zip || (echo "Unzip failed" && exit 1)
-          test -d portable-python || (echo "Folder not found after unzip" && exit 1)
+
+          echo "📂 Unzipping..."
+          unzip -q portable-python.zip || { echo "❌ Unzip failed"; exit 1; }
+
+          if [ ! -d "portable-python" ]; then
+            echo "❌ portable-python folder not found after unzip"
+            exit 1
+          fi
+
+          echo "✅ portable-python successfully extracted:"
           ls -la portable-python
+
 
       - name: Build Electron app
         run: npm run dist
