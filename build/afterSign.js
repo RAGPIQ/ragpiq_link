@@ -4,6 +4,10 @@ const { sign } = require('@electron/osx-sign');
 const { notarize } = require('@electron/notarize');
 const { execSync } = require('child_process');
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 exports.default = async function afterSign(context) {
   const { electronPlatformName, appOutDir } = context;
 
@@ -40,11 +44,13 @@ exports.default = async function afterSign(context) {
     }
   });
 
-  // 🔁 Final deep codesign pass to eliminate .cstemp + bundle ambiguity
   console.log('🔁 Running final deep codesign...');
   execSync(`codesign --deep --force --options runtime --sign "${process.env.CSC_NAME}" "${appPath}"`, {
     stdio: 'inherit'
   });
+
+  console.log('⏳ Waiting for file sync to settle...');
+  await sleep(3000); // Add delay before notarizing to avoid .cstemp race
 
   console.log(`✅ App signed. Proceeding to notarize...`);
 
