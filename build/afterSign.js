@@ -4,16 +4,20 @@ const { sign } = require('@electron/osx-sign');
 const { notarize } = require('@electron/notarize');
 
 exports.default = async function afterSign(context) {
-  const appPath = path.join(
-    context.appOutDir,
-    `${context.packager.appInfo.productFilename}.app`
-  );
+  const { electronPlatformName, appOutDir } = context;
+
+  if (electronPlatformName !== 'darwin') {
+    console.log('🛑 Skipping notarization: not macOS');
+    return;
+  }
+
+  const appPath = path.join(appOutDir, `${context.packager.appInfo.productFilename}.app`);
 
   console.log(`🔏 Signing macOS app at ${appPath}...`);
 
   await sign({
     app: appPath,
-    identity: process.env.CSC_NAME, // Set this in GitHub Secrets
+    identity: process.env.CSC_NAME,
     'hardened-runtime': true,
     entitlements: 'build/entitlements.mac.plist',
     'entitlements-inherit': 'build/entitlements.mac.plist',
