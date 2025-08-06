@@ -22,9 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install electron-builder
-        run: npm install electron-builder@24.12.0
-
       - name: Setup macOS signing keychain
         run: |
           echo "${{ secrets.MAC_P12_BASE64 }}" | base64 --decode > certificate.p12
@@ -40,12 +37,12 @@ jobs:
           unzip -q portable-python.zip
 
       - name: Build x64 app
-        run: electron-builder --mac --x64
+        run: npx electron-builder --mac --x64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Build arm64 app
-        run: electron-builder --mac --arm64
+        run: npx electron-builder --mac --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
@@ -106,9 +103,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install electron-builder
-        run: npm install electron-builder@24.12.0
-
       - name: Download and extract portable-python
         shell: pwsh
         run: |
@@ -116,7 +110,7 @@ jobs:
           Expand-Archive -Path "portable-python.zip" -DestinationPath "."
 
       - name: Build Windows app
-        run: electron-builder --win --x64
+        run: npx electron-builder --win --x64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
