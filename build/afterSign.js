@@ -17,19 +17,23 @@ exports.default = async function afterSign(context) {
   console.log(`🔏 Signing macOS app at ${appPath}...`);
 
   await sign({
-    app: appPath,
-    identity: process.env.CSC_NAME,
-    'hardened-runtime': true,
-    entitlements: 'build/entitlements.mac.plist',
-    'entitlements-inherit': 'build/entitlements.mac.plist',
-    'signature-flags': 'library',
-    'gatekeeper-assess': false,
-    'strict-verification': false,
-    filter: (filePath) => {
-      const skipExts = ['.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg', '.jpg', '.png', '.gif', '.tiff', '.a'];
-      return !skipExts.some(ext => filePath.endsWith(ext));
-    }
-  });
+  app: appPath,
+  identity: process.env.CSC_NAME,
+  'hardened-runtime': true,
+  entitlements: 'build/entitlements.mac.plist',
+  'entitlements-inherit': 'build/entitlements.mac.plist',
+  'signature-flags': 'library',
+  'gatekeeper-assess': false,
+  'strict-verification': false,
+  filter: (filePath) => {
+    const skipExts = [
+      '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
+      '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
+    ];
+    return !skipExts.some(ext => filePath.endsWith(ext));
+  }
+});
+
 
   console.log(`✅ App signed. Proceeding to notarize...`);
 

@@ -65,6 +65,7 @@ jobs:
           find portable-python/mac -path '*/doc/*' -exec rm -rf {} +
           find portable-python/mac -name 'tclConfig.sh' -delete
           find portable-python/mac -name 'tclooConfig.sh' -delete
+          find portable-python/mac -name '*.a' -delete
 
           # Remove executable bit from non-binaries
           find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" -exec chmod -x {} +
