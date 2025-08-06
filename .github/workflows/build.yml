@@ -75,11 +75,13 @@ jobs:
         run: npx electron-builder --mac --x64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CSC_NAME: ${{ secrets.CSC_NAME }}
 
       - name: Build arm64 app
         run: npx electron-builder --mac --arm64
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CSC_NAME: ${{ secrets.CSC_NAME }}
 
       - name: Merge dylibs recursively into universal
         run: |
@@ -124,6 +126,7 @@ jobs:
             dist/**/Ragpiq*.dmg
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CSC_NAME: ${{ secrets.CSC_NAME }}
 
   build-windows:
     runs-on: windows-latest
