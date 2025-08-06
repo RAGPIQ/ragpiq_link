@@ -73,7 +73,7 @@
         "CFBundleName": "Ragpiq Link",
         "CFBundleDisplayName": "Ragpiq Link"
       },
-      "x64ArchFiles": "Contents/Resources/**/*"
+      "x64ArchFiles": "Contents/Resources/python/mac/Library/Frameworks/3.13/lib/python3.13/site-packages/PIL/.dylibs/**"
     },
     "win": {
       "target": [
