@@ -2,7 +2,6 @@
 const path = require('path');
 const { sign } = require('@electron/osx-sign');
 const { notarize } = require('@electron/notarize');
-const fs = require('fs');
 
 exports.default = async function afterSign(context) {
   const { electronPlatformName, appOutDir } = context;
@@ -13,27 +12,32 @@ exports.default = async function afterSign(context) {
   }
 
   const appPath = path.join(appOutDir, `${context.packager.appInfo.productFilename}.app`);
-
   console.log(`🔏 Signing macOS app at ${appPath}...`);
 
   await sign({
-  app: appPath,
-  identity: process.env.CSC_NAME,
-  'hardened-runtime': true,
-  entitlements: 'build/entitlements.mac.plist',
-  'entitlements-inherit': 'build/entitlements.mac.plist',
-  'signature-flags': 'library',
-  'gatekeeper-assess': false,
-  'strict-verification': false,
-  filter: (filePath) => {
-    const skipExts = [
-      '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
-      '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
-    ];
-    return !skipExts.some(ext => filePath.endsWith(ext));
-  }
-});
+    app: appPath,
+    identity: process.env.CSC_NAME,
+    'hardened-runtime': true,
+    entitlements: 'build/entitlements.mac.plist',
+    'entitlements-inherit': 'build/entitlements.mac.plist',
+    'signature-flags': 'library',
+    'gatekeeper-assess': false,
+    'strict-verification': false,
+    filter: (filePath) => {
+      const skipExts = [
+        '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
+        '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
+      ];
+      const skipNames = [
+        'tkConfig.sh', 'tclConfig.sh', 'tclooConfig.sh', 'libtclstub8.6.a'
+      ];
 
+      return (
+        !skipExts.some(ext => filePath.endsWith(ext)) &&
+        !skipNames.some(name => filePath.endsWith(name))
+      );
+    }
+  });
 
   console.log(`✅ App signed. Proceeding to notarize...`);
 
