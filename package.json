@@ -75,7 +75,7 @@
       "entitlementsInherit": "build/entitlements.mac.plist",
       "category": "public.app-category.productivity",
       "signIgnore": [
-      "python/**"
+      "python/.*"
     ],
       "executableName": "Ragpiq Link",
       "extendInfo": {
