@@ -73,6 +73,7 @@
       "hardenedRuntime": true,
       "category": "public.app-category.productivity",
       "executableName": "Ragpiq Link",
+      "identity": null,
       "extendInfo": {
         "CFBundleExecutable": "Ragpiq Link",
         "CFBundleName": "Ragpiq Link",
