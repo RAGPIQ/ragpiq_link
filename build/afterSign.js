@@ -2,6 +2,7 @@
 const path = require('path');
 const { sign } = require('@electron/osx-sign');
 const { notarize } = require('@electron/notarize');
+const fs = require('fs');
 
 exports.default = async function afterSign(context) {
   const { electronPlatformName, appOutDir } = context;
@@ -24,6 +25,10 @@ exports.default = async function afterSign(context) {
     'signature-flags': 'library',
     'gatekeeper-assess': false,
     'strict-verification': false,
+    filter: (filePath) => {
+      const skipExts = ['.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg', '.jpg', '.png', '.gif', '.tiff'];
+      return !skipExts.some(ext => filePath.endsWith(ext));
+    }
   });
 
   console.log(`✅ App signed. Proceeding to notarize...`);
