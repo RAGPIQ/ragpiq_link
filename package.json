@@ -31,6 +31,16 @@
       "portable-python/mac/Library/Frameworks/Versions/3.13/bin",
       "portable-python/mac/Library/Frameworks/Versions/3.13/lib"
     ],
+    "signIgnore": [
+      "**/*.gif",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.jpeg",
+      "**/*.tcl",
+      "**/*.pyc",
+      "**/__pycache__/**",
+      "**/test*/**"
+    ],
     "files": [
       "**/*",
       "!portable-python/mac/Library/Frameworks/3.13/Frameworks/Tcl.framework/PrivateHeaders/**",
