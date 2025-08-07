@@ -33,7 +33,7 @@ jobs:
 
       - name: Download and extract portable-python
         run: |
-          curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip
+          curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
           unzip -q portable-python.zip
       
       - name: Cleanup portable-python
@@ -157,7 +157,7 @@ jobs:
       - name: Download and extract portable-python
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.27/portable-python.zip" -OutFile "portable-python.zip"
+          Invoke-WebRequest -Uri "https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip" -OutFile "portable-python.zip"
           Expand-Archive -Path "portable-python.zip" -DestinationPath "."
 
       - name: Build Windows app
