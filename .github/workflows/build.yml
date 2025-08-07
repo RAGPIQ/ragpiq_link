@@ -31,14 +31,13 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MAC_P12_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
 
-      - name: Download and extract portable-python
+      - name: Download, unzip and clean portable-python
         run: |
           set -euo pipefail
           curl -L --fail -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
           unzip -q portable-python.zip
-      
-      - name: Cleanup portable-python
-        run: |
+
+          # General cleanup
           find portable-python -name '__pycache__' -exec rm -rf {} +
           find portable-python -name '*.pyc' -delete
           find portable-python -name '*.pyo' -delete
@@ -54,10 +53,7 @@ jobs:
           find portable-python -path '*/share/*' -exec rm -rf {} +
           find portable-python -path '*/doc/*' -exec rm -rf {} +
 
-      - name: Clean portable-python for macOS
-        if: runner.os == 'macOS'
-        run: |
-          # Remove unneeded files and directories
+          # macOS-specific cleanup
           find portable-python/mac -name '__pycache__' -exec rm -rf {} +
           find portable-python/mac -type f \( -name '*.pyc' -o -name '*.pyo' -o -name '*.py' -o -name '*.txt' -o -name '*.rst' -o -name '*.md' \) -delete
           find portable-python/mac -type d -name 'test*' -exec rm -rf {} +
@@ -68,8 +64,6 @@ jobs:
           find portable-python/mac -name 'tclooConfig.sh' -delete
           find portable-python/mac -name '*.a' -delete
           find portable-python/mac -name 'tkConfig.sh' -delete
-
-          # Remove executable bit from non-binaries
           find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" -exec chmod -x {} +
 
       - name: Build x64 app
@@ -135,11 +129,6 @@ jobs:
             dist/**/Ragpiq*.dmg
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          CSC_NAME: ${{ secrets.CSC_NAME }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          NOTARIZE_APP_BUNDLE_ID: ${{ secrets.NOTARIZE_APP_BUNDLE_ID }}
 
   build-windows:
     runs-on: windows-latest
