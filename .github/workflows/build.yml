@@ -33,8 +33,11 @@ jobs:
 
       - name: Download and extract portable-python
         run: |
-          curl -L -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
-          unzip -q portable-python.zip
+          set -euo pipefail
+          curl -L --fail -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
+          rm -rf portable-python
+          mkdir portable-python
+          unzip -q portable-python.zip -d portable-python
       
       - name: Cleanup portable-python
         run: |
