@@ -1,6 +1,6 @@
 // build/afterSign.js
 const path = require('path');
-const { sign } = require('@electron/osx-sign');
+const { signApp } = require('@electron/osx-sign');
 const { notarize } = require('@electron/notarize');
 const { execSync } = require('child_process');
 
@@ -36,7 +36,7 @@ exports.default = async function afterSign(context) {
   const appPath = path.join(appOutDir, `${context.packager.appInfo.productFilename}.app`);
   console.log(`🔏 Signing macOS app at ${appPath}...`);
 
-  await sign({
+  await signApp({
     app: appPath,
     identity: process.env.CSC_NAME,
     'hardened-runtime': true,
