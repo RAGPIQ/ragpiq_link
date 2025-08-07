@@ -4,6 +4,7 @@ dist/
 *.log
 
 portable-python/
+portable-python.zip
 
 # OS junk
 .DS_Store

@@ -28,8 +28,8 @@
     ],
     "asarUnpack": [
       "src/scripts",
-      "portable-python/mac/Library/Frameworks/Versions/3.13/bin",
-      "portable-python/mac/Library/Frameworks/Versions/3.13/lib"
+      "portable-python/mac/Library/Frameworks/3.13/bin",
+      "portable-python/mac/Library/Frameworks/3.13/lib"
     ],
     "files": [
       "**/*",
