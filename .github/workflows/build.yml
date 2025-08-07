@@ -35,9 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -L --fail -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
-          rm -rf portable-python
-          mkdir portable-python
-          unzip -q portable-python.zip -d portable-python
+          unzip -q portable-python.zip
       
       - name: Cleanup portable-python
         run: |
