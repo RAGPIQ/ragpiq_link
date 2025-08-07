@@ -74,8 +74,9 @@ exports.default = async function afterSign(context) {
     waitForProcessing: true,
   });
 
-  console.log(`✅ App notarized. Proceeding to staple...`);
-
+  console.log(`✅ App notarized. Waiting before stapling...`);
+  await sleep(15000);
+  
   try {
     execSync(`xcrun stapler staple -v "${appPath}"`, { stdio: 'inherit' });
     console.log(`📌 Stapling complete.`);
