@@ -62,6 +62,7 @@
       "buildResources": "resources"
     },
     "mac": {
+      "identity": null,
       "target": [
         {
           "target": "dmg",
@@ -70,6 +71,9 @@
       ],
       "icon": "resources/iconMac.icns",
       "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "gatekeeperAssess": false,
       "hardenedRuntime": true,
       "category": "public.app-category.productivity",
       "executableName": "Ragpiq Link",
