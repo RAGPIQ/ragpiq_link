@@ -31,13 +31,19 @@ jobs:
           security import certificate.p12 -k build.keychain -P "${{ secrets.MAC_P12_PASSWORD }}" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
 
-      - name: Download, unzip and clean portable-python
+      - name: Download and extract portable-python
         run: |
-          set -euo pipefail
           curl -L --fail -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
           unzip -q portable-python.zip
 
-          # General cleanup
+      - name: Verify portable-python/mac exists
+        run: |
+          ls -al portable-python
+          ls -al portable-python/mac || (echo "❌ portable-python/mac not found" && exit 1)
+
+      - name: Clean portable-python
+        run: |
+          set -euo pipefail
           find portable-python -name '__pycache__' -exec rm -rf {} +
           find portable-python -name '*.pyc' -delete
           find portable-python -name '*.pyo' -delete
@@ -53,7 +59,6 @@ jobs:
           find portable-python -path '*/share/*' -exec rm -rf {} +
           find portable-python -path '*/doc/*' -exec rm -rf {} +
 
-          # macOS-specific cleanup
           find portable-python/mac -name '__pycache__' -exec rm -rf {} +
           find portable-python/mac -type f \( -name '*.pyc' -o -name '*.pyo' -o -name '*.py' -o -name '*.txt' -o -name '*.rst' -o -name '*.md' \) -delete
           find portable-python/mac -type d -name 'test*' -exec rm -rf {} +
