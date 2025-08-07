@@ -62,7 +62,6 @@
       "buildResources": "resources"
     },
     "mac": {
-      "identity": null,
       "target": [
         {
           "target": "dmg",

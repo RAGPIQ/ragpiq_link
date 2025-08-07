@@ -1,6 +1,5 @@
 // build/afterSign.js
 const path = require('path');
-const { signApp } = require('@electron/osx-sign');
 const { notarize } = require('@electron/notarize');
 const { execSync } = require('child_process');
 
@@ -34,37 +33,15 @@ exports.default = async function afterSign(context) {
   }
 
   const appPath = path.join(appOutDir, `${context.packager.appInfo.productFilename}.app`);
-  console.log(`🔏 Signing macOS app at ${appPath}...`);
+  console.log(`✅ Verifying signature before notarization...`);
 
-  await signApp({
-    app: appPath,
-    identity: process.env.CSC_NAME,
-    'hardened-runtime': true,
-    entitlements: 'build/entitlements.mac.plist',
-    'entitlements-inherit': 'build/entitlements.mac.plist',
-    'signature-flags': 'library',
-    'gatekeeper-assess': false,
-    'strict-verification': false,
-    filter: (filePath) => {
-      const skipExts = [
-        '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
-        '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
-      ];
-
-      const skipPaths = [
-        'Tcl.framework/Tcl',
-        'Tk.framework/Tk',
-      ];
-
-      if (skipExts.some(ext => filePath.endsWith(ext))) return false;
-      if (skipPaths.some(skip => filePath.includes(skip))) return false;
-
-      return true;
-    }
-  });
-
-  console.log('⏳ Waiting for file sync to settle...');
-  await sleep(3000);
+  try {
+    execSync(`codesign --verify --deep --strict --verbose=2 "${appPath}"`, { stdio: 'inherit' });
+    console.log(`✅ App is correctly signed.`);
+  } catch (err) {
+    console.error('❌ Signature verification failed. Aborting notarization.');
+    throw err;
+  }
 
   if (
     !process.env.NOTARIZE_APP_BUNDLE_ID ||
@@ -76,7 +53,7 @@ exports.default = async function afterSign(context) {
     return;
   }
 
-  console.log(`✅ App signed. Proceeding to notarize...`);
+  console.log(`🚀 Notarizing app...`);
 
   await notarize({
     appBundleId: process.env.NOTARIZE_APP_BUNDLE_ID,
@@ -88,6 +65,6 @@ exports.default = async function afterSign(context) {
     waitForProcessing: true,
   });
 
-  console.log(`✅ App notarized. Attempting to staple...`);
+  console.log(`✅ App notarized. Stapling...`);
   await stapleWithRetry(appPath);
 };
