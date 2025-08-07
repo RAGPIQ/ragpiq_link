@@ -50,7 +50,16 @@ exports.default = async function afterSign(context) {
         '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
         '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
       ];
-      return !skipExts.some(ext => filePath.endsWith(ext));
+
+      const skipPaths = [
+        'Tcl.framework/Tcl',
+        'Tk.framework/Tk',
+      ];
+
+      if (skipExts.some(ext => filePath.endsWith(ext))) return false;
+      if (skipPaths.some(skip => filePath.includes(skip))) return false;
+
+      return true;
     }
   });
 
