@@ -8,6 +8,23 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function stapleWithRetry(appPath, attempts = 5, delay = 30000) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      execSync(`xcrun stapler staple -v "${appPath}"`, { stdio: 'inherit' });
+      console.log(`📌 Stapling complete (attempt ${i}).`);
+      return;
+    } catch (err) {
+      if (i === attempts) {
+        console.error('❌ Stapling failed after maximum retries.');
+        throw err;
+      }
+      console.warn(`⚠️ Stapling failed on attempt ${i}. Waiting before retry...`);
+      await sleep(delay);
+    }
+  }
+}
+
 exports.default = async function afterSign(context) {
   const { electronPlatformName, appOutDir } = context;
 
@@ -33,20 +50,8 @@ exports.default = async function afterSign(context) {
         '.txt', '.py', '.pyc', '.sh', '.md', '.tcl', '.rst', '.jpeg',
         '.jpg', '.png', '.gif', '.tiff', '.a', '.pak', '.icns'
       ];
-      const skipNames = [
-        'tkConfig.sh', 'tclConfig.sh', 'tclooConfig.sh', 'libtclstub8.6.a',
-        'Tcl', 'Tk'
-      ];
-      return (
-        !skipExts.some(ext => filePath.endsWith(ext)) &&
-        !skipNames.some(name => filePath.endsWith(name))
-      );
+      return !skipExts.some(ext => filePath.endsWith(ext));
     }
-  });
-
-  console.log('🔁 Running final deep codesign...');
-  execSync(`codesign --deep --force --options runtime --sign "${process.env.CSC_NAME}" "${appPath}"`, {
-    stdio: 'inherit'
   });
 
   console.log('⏳ Waiting for file sync to settle...');
@@ -74,21 +79,6 @@ exports.default = async function afterSign(context) {
     waitForProcessing: true,
   });
 
-  console.log(`✅ App notarized. Waiting before stapling...`);
-  await sleep(15000);
-  
-  try {
-    execSync(`xcrun stapler staple -v "${appPath}"`, { stdio: 'inherit' });
-    console.log(`📌 Stapling complete.`);
-  } catch (err) {
-    console.warn('⚠️ Stapling failed. Waiting and retrying...');
-    await sleep(15000);
-    try {
-      execSync(`xcrun stapler staple -v "${appPath}"`, { stdio: 'inherit' });
-      console.log(`✅ Stapling succeeded after retry.`);
-    } catch (retryErr) {
-      console.error('❌ Stapling failed again. Notarization may still be valid.');
-      throw retryErr;
-    }
-  }
+  console.log(`✅ App notarized. Attempting to staple...`);
+  await stapleWithRetry(appPath);
 };
