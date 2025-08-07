@@ -50,7 +50,17 @@ exports.default = async function afterSign(context) {
   });
 
   console.log('⏳ Waiting for file sync to settle...');
-  await sleep(3000); // Add delay before notarizing to avoid .cstemp race
+  await sleep(3000);
+
+  if (
+    !process.env.NOTARIZE_APP_BUNDLE_ID ||
+    !process.env.APPLE_ID ||
+    !process.env.APPLE_APP_SPECIFIC_PASSWORD ||
+    !process.env.APPLE_TEAM_ID
+  ) {
+    console.log('⚠️ Skipping notarization: required Apple credentials not set.');
+    return;
+  }
 
   console.log(`✅ App signed. Proceeding to notarize...`);
 
@@ -64,5 +74,20 @@ exports.default = async function afterSign(context) {
     waitForProcessing: true,
   });
 
-  console.log(`📌 Successfully notarized and stapled: ${appPath}`);
+  console.log(`✅ App notarized. Proceeding to staple...`);
+
+  try {
+    execSync(`xcrun stapler staple -v "${appPath}"`, { stdio: 'inherit' });
+    console.log(`📌 Stapling complete.`);
+  } catch (err) {
+    console.warn('⚠️ Stapling failed. Waiting and retrying...');
+    await sleep(15000);
+    try {
+      execSync(`xcrun stapler staple -v "${appPath}"`, { stdio: 'inherit' });
+      console.log(`✅ Stapling succeeded after retry.`);
+    } catch (retryErr) {
+      console.error('❌ Stapling failed again. Notarization may still be valid.');
+      throw retryErr;
+    }
+  }
 };
