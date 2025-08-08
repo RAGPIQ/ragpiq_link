@@ -68,8 +68,8 @@
             "CFBundleName": "Ragpiq Link",
             "CFBundleDisplayName": "Ragpiq Link"
         },
-        "x64ArchFiles": "Contents/Resources/libusb-1.0.dylib",
-        "singleArchFiles": "Contents/Resources/libusb-1.0.dylib"
+        "x64ArchFiles": "{Contents/Resources/libusb-1.0.dylib,Contents/Resources/python/**}",
+        "singleArchFiles": "{Contents/Resources/libusb-1.0.dylib,Contents/Resources/python/**}"
     },
     "win": {
       "target": ["nsis"],
