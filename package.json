@@ -69,7 +69,8 @@
             "CFBundleDisplayName": "Ragpiq Link"
         },
         "singleArchFiles": "{**/Resources/**,Resources/**,Contents/Resources/**}",
-        "x64ArchFiles": "{**/Resources/**,Resources/**,Contents/Resources/**}"
+        "x64ArchFiles": "{**/Resources/**,Resources/**,Contents/Resources/**,Contents/Resources/python/mac/Library/Frameworks/3.13/lib/python3.13/site-packages/PIL/.dylibs/**}"
+
     },
     "win": {
       "target": ["nsis"],
