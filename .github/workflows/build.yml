@@ -16,7 +16,16 @@ jobs:
       
       - name: Verify electron-builder config
         run: |
-          node -e "const p=require('./package.json');console.log('singleArchFiles=', p?.build?.mac?.singleArchFiles || 'MISSING'); if(!p?.build?.mac?.singleArchFiles) process.exit(1)"
+          node -e "const p=require('./package.json'); \
+            console.log('singleArchFiles=', p?.build?.mac?.singleArchFiles || 'MISSING'); \
+            console.log('x64ArchFiles=', p?.build?.mac?.x64ArchFiles || 'MISSING'); \
+            if(!p?.build?.mac?.singleArchFiles || !p?.build?.mac?.x64ArchFiles) process.exit(1)"
+      
+      - name: Print effective config
+        run: |
+          npx electron-builder --mac --x64 --dir --publish=never --config.mac.identity=null
+          echo "----- builder-effective-config.yaml -----"
+          cat dist/builder-effective-config.yaml || true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -109,7 +118,7 @@ jobs:
           NOTARIZE_APP_BUNDLE_ID: ${{ secrets.NOTARIZE_APP_BUNDLE_ID }}
 
       - name: Build universal app
-        run: npx electron-builder --mac --universal --config.mac.singleArchFiles="Contents/Resources/**"
+        run: npx electron-builder --mac --universal
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}

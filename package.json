@@ -68,7 +68,8 @@
             "CFBundleName": "Ragpiq Link",
             "CFBundleDisplayName": "Ragpiq Link"
         },
-        "singleArchFiles": "Contents/Resources/**"
+        "singleArchFiles": "{Contents/Resources/**,Resources/**}",
+        "x64ArchFiles": "{Contents/Resources/**,Resources/**}"
     },
     "win": {
       "target": ["nsis"],
