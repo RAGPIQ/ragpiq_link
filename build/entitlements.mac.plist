@@ -2,16 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-  <key>com.apple.security.cs.allow-jit</key>
-  <false/>
-  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-  <false/>
-  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
-  <false/>
-  <key>com.apple.security.cs.disable-library-validation</key>
-  <true/>
-  <key>com.apple.security.network.client</key>
-  <true/>
-</dict>
+  <dict>
+    <!-- Required for Electron/V8 JIT -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- Required because Electron/V8 allocates executable memory at runtime -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- Needed since you bundle/ship non-system dylibs (e.g., libusb, Python) -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- Outbound network (auto-update, APIs, etc.) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- Keep this OFF unless you absolutely need it -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <false/>
+
+    <!-- For release builds leave this false (don’t enable debugger) -->
+    <key>com.apple.security.get-task-allow</key>
+    <false/>
+  </dict>
 </plist>
