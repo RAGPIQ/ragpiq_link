@@ -109,40 +109,49 @@ jobs:
       - name: Merge dylibs recursively into universal
         run: |
           set -euo pipefail
-          APP_X64="dist/mac-x64/Ragpiq Link.app"
           APP_ARM="dist/mac-arm64/Ragpiq Link.app"
+          X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
+          APP_X64="$X64_DIR/Ragpiq Link.app"
           OUT="dist/universal"
+
+          echo "Using x64 app at: $APP_X64"
+          echo "Using arm64 app at: $APP_ARM"
 
           mkdir -p "$OUT/Contents/Resources"
           rsync -a --delete "$APP_ARM/Contents/Resources/" "$OUT/Contents/Resources/"
 
-          find "$APP_X64/Contents/Resources" -name '*.dylib' | while read f; do
-            rel="${f#"$APP_X64/"}"
-            other="$APP_ARM/$rel"
-            out="$OUT/$rel"
-            mkdir -p "$(dirname "$out")"
-            if [[ -f "$other" ]]; then
-              lipo -create "$f" "$other" -output "$out" || cp "$f" "$out"
-            else
-              cp "$f" "$out"
-            fi
-          done
+          if [ -d "$APP_X64/Contents/Resources" ]; then
+            find "$APP_X64/Contents/Resources" -name '*.dylib' | while read f; do
+              rel="${f#"$APP_X64/"}"
+              other="$APP_ARM/$rel"
+              out="$OUT/$rel"
+              mkdir -p "$(dirname "$out")"
+              if [[ -f "$other" ]]; then
+                lipo -create "$f" "$other" -output "$out" || cp "$f" "$out"
+              else
+                cp "$f" "$out"
+              fi
+            done
+          else
+            echo "No x64 Resources dir found at $APP_X64/Contents/Resources; skipping dylib merge from x64."
+          fi
 
       - name: Remove duplicate dylibs before universal build
         run: |
           set -euo pipefail
-          APP_X64="dist/mac-x64/Ragpiq Link.app"
+          X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
+          APP_X64="$X64_DIR/Ragpiq Link.app"
           APP_ARM="dist/mac-arm64/Ragpiq Link.app"
-          # Remove files that appear in both inputs so only our dist/universal copy is used
           for f in "Contents/Resources/libusb-1.0.dylib"; do
             rm -f "$APP_X64/$f" "$APP_ARM/$f" || true
           done
 
       - name: Build universal app
         run: |
+          X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
           electron-builder \
             --mac universal \
-            --universal-arch-paths dist/mac-arm64 dist/mac-x64 \
+            --universal-arch-paths dist/mac-arm64 "$X64_DIR" \
             --universal-extra-files dist/universal
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
