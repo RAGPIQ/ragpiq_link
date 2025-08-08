@@ -35,6 +35,21 @@ jobs:
         run: |
           curl -L --fail -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
           unzip -q portable-python.zip
+      
+      - name: List contents of unzipped portable-python
+        run: |
+          echo "📁 Current directory: $(pwd)"
+          echo "🔍 Top level:"
+          ls -la
+
+          echo "📂 portable-python:"
+          ls -la portable-python || echo "❌ portable-python not found"
+
+          echo "📂 portable-python/mac:"
+          ls -la portable-python/mac || echo "❌ portable-python/mac not found"
+
+          echo "📂 Deep scan:"
+          find portable-python | head -n 100
 
       - name: Verify portable-python/mac exists
         run: |
