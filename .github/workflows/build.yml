@@ -20,12 +20,6 @@ jobs:
             console.log('singleArchFiles=', p?.build?.mac?.singleArchFiles || 'MISSING'); \
             console.log('x64ArchFiles=', p?.build?.mac?.x64ArchFiles || 'MISSING'); \
             if(!p?.build?.mac?.singleArchFiles || !p?.build?.mac?.x64ArchFiles) process.exit(1)"
-      
-      - name: Print effective config
-        run: |
-          npx electron-builder --mac --x64 --dir --publish=never --config.mac.identity=null
-          echo "----- builder-effective-config.yaml -----"
-          cat dist/builder-effective-config.yaml || true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -34,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
+    
       - name: Setup macOS signing keychain
         run: |
           echo "${{ secrets.MAC_P12_BASE64 }}" | base64 --decode > certificate.p12
