@@ -148,11 +148,18 @@ jobs:
 
       - name: Build universal app
         run: |
+          set -euo pipefail
           X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
-          npx electron-builder \
-            --mac universal \
-            --universal-arch-paths dist/mac-arm64 "$X64_DIR" \
-            --universal-extra-files dist/universal
+          APP_ARM="dist/mac-arm64/Ragpiq Link.app"
+
+          # ensure the merged dylib ends up in the final universal app
+          if [ -f "dist/universal/Contents/Resources/libusb-1.0.dylib" ]; then
+            mkdir -p "$APP_ARM/Contents/Resources"
+            cp -f "dist/universal/Contents/Resources/libusb-1.0.dylib" \
+                  "$APP_ARM/Contents/Resources/libusb-1.0.dylib"
+          fi
+
+          npx electron-builder --mac universal
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
