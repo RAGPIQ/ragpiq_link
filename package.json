@@ -4,7 +4,6 @@
   "description": "Ragpiq Link Desktop App",
   "main": "src/main/index.js",
   "author": "Ragpiq Pty Ltd",
-  "asar": true,
   "license": "ISC",
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--max-old-space-size=4096 electron .",
@@ -12,19 +11,14 @@
     "dist": "electron-builder"
   },
   "build": {
+    "asar": true,
     "appId": "com.ragpiq.desktoplink",
     "productName": "Ragpiq Link",
-    "artifactName": "Ragpiq.Link.Setup.${ext}",
+    "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
     "copyright": "Copyright © 2025 Ragpiq",
     "extraResources": [
-      {
-        "from": "portable-python",
-        "to": "python"
-      },
-      {
-        "from": "portable-python/mac/libusb/libusb-1.0.dylib",
-        "to": "libusb-1.0.dylib"
-      }
+      { "from": "portable-python", "to": "python" },
+      { "from": "portable-python/mac/libusb/libusb-1.0.dylib", "to": "libusb-1.0.dylib" }
     ],
     "asarUnpack": [
       "src/scripts",
@@ -58,16 +52,9 @@
       "!**/share/**",
       "!**/doc/**"
     ],
-    "directories": {
-      "buildResources": "resources"
-    },
+    "directories": { "buildResources": "resources" },
     "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": "universal"
-        }
-      ],
+      "target": ["dmg", "zip"],
       "icon": "resources/iconMac.icns",
       "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
       "entitlements": "build/entitlements.mac.plist",
@@ -83,9 +70,7 @@
       }
     },
     "win": {
-      "target": [
-        "nsis"
-      ],
+      "target": ["nsis"],
       "icon": "resources/icon.ico"
     },
     "afterSign": "build/afterSign.js"
@@ -95,7 +80,7 @@
   },
   "devDependencies": {
     "cross-env": "^10.0.0",
-    "electron": "^27.1.3",
+    "electron": "27.3.11",
     "electron-builder": "24.12.0"
   }
 }

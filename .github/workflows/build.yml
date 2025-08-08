@@ -41,13 +41,10 @@ jobs:
           echo "📁 Current directory: $(pwd)"
           echo "🔍 Top level:"
           ls -la
-
           echo "📂 portable-python:"
           ls -la portable-python || echo "❌ portable-python not found"
-
           echo "📂 portable-python/mac:"
           ls -la portable-python/mac || echo "❌ portable-python/mac not found"
-
           echo "📂 Deep scan:"
           find portable-python | head -n 100
 
@@ -113,6 +110,7 @@ jobs:
           APP_ARM="dist/mac-arm64/Ragpiq Link.app"
           OUT="dist/universal"
 
+          mkdir -p "$OUT/Contents/Resources"
           rsync -a --delete "$APP_ARM/Contents/Resources/" "$OUT/Contents/Resources/"
 
           find "$APP_X64/Contents/Resources" -name '*.dylib' | while read f; do
@@ -125,6 +123,16 @@ jobs:
             else
               cp "$f" "$out"
             fi
+          done
+
+      - name: Remove duplicate dylibs before universal build
+        run: |
+          set -euo pipefail
+          APP_X64="dist/mac-x64/Ragpiq Link.app"
+          APP_ARM="dist/mac-arm64/Ragpiq Link.app"
+          # Remove files that appear in both inputs so only our dist/universal copy is used
+          for f in "Contents/Resources/libusb-1.0.dylib"; do
+            rm -f "$APP_X64/$f" "$APP_ARM/$f" || true
           done
 
       - name: Build universal app
