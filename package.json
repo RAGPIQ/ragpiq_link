@@ -54,25 +54,23 @@
     ],
     "directories": { "buildResources": "resources" },
     "mac": {
-      "target": ["dmg", "zip"],
-      "icon": "resources/iconMac.icns",
-      "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "gatekeeperAssess": false,
-      "hardenedRuntime": true,
-      "category": "public.app-category.productivity",
-      "executableName": "Ragpiq Link",
-      "extendInfo": {
-        "CFBundleExecutable": "Ragpiq Link",
-        "CFBundleName": "Ragpiq Link",
-        "CFBundleDisplayName": "Ragpiq Link"
-      },
-      "universalApp": {
+        "target": ["dmg", "zip"],
+        "icon": "resources/iconMac.icns",
+        "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
+        "entitlements": "build/entitlements.mac.plist",
+        "entitlementsInherit": "build/entitlements.mac.plist",
+        "gatekeeperAssess": false,
+        "hardenedRuntime": true,
+        "category": "public.app-category.productivity",
+        "executableName": "Ragpiq Link",
+        "extendInfo": {
+            "CFBundleExecutable": "Ragpiq Link",
+            "CFBundleName": "Ragpiq Link",
+            "CFBundleDisplayName": "Ragpiq Link"
+        },
         "x64ArchFiles": [
-          "Contents/Resources/libusb-1.0.dylib"
+            "Contents/Resources/libusb-1.0.dylib"
         ]
-      }
     },
     "win": {
       "target": ["nsis"],
