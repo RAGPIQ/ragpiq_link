@@ -159,7 +159,7 @@ jobs:
                   "$APP_ARM/Contents/Resources/libusb-1.0.dylib"
           fi
 
-          npx electron-builder --mac universal
+          npx electron-builder --mac --universal
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
