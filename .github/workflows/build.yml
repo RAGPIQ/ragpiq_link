@@ -149,7 +149,7 @@ jobs:
       - name: Build universal app
         run: |
           X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
-          electron-builder \
+          npx electron-builder \
             --mac universal \
             --universal-arch-paths dist/mac-arm64 "$X64_DIR" \
             --universal-extra-files dist/universal
