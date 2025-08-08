@@ -67,6 +67,11 @@
         "CFBundleExecutable": "Ragpiq Link",
         "CFBundleName": "Ragpiq Link",
         "CFBundleDisplayName": "Ragpiq Link"
+      },
+      "universalApp": {
+        "x64ArchFiles": [
+          "Contents/Resources/libusb-1.0.dylib"
+        ]
       }
     },
     "win": {
