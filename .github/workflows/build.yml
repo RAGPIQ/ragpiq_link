@@ -13,6 +13,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      
+      - name: Verify electron-builder config
+        run: |
+          node -e "const p=require('./package.json');console.log('singleArchFiles=', p?.build?.mac?.singleArchFiles || 'MISSING'); if(!p?.build?.mac?.singleArchFiles) process.exit(1)"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -105,7 +109,7 @@ jobs:
           NOTARIZE_APP_BUNDLE_ID: ${{ secrets.NOTARIZE_APP_BUNDLE_ID }}
 
       - name: Build universal app
-        run: npx electron-builder --mac --universal
+        run: npx electron-builder --mac --universal --config.mac.singleArchFiles="Contents/Resources/**"
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
