@@ -28,11 +28,9 @@ jobs:
           security create-keychain -p "buildkey" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "buildkey" build.keychain
-          # Keep it unlocked for a long time
           security set-keychain-settings -lut 3600 build.keychain
           security import certificate.p12 -k build.keychain -P "${{ secrets.MAC_P12_PASSWORD }}" -T /usr/bin/codesign -T /usr/bin/productsign
           security set-key-partition-list -S apple-tool:,apple: -s -k "buildkey" build.keychain
-
 
       - name: Download and extract portable-python
         run: |
@@ -87,7 +85,7 @@ jobs:
           find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" -exec chmod -x {} +
 
       - name: Build x64 app
-        run: npx electron-builder --mac --x64
+        run: npx electron-builder --mac --x64 --publish=never
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_NAME: ${{ secrets.CSC_NAME }}
@@ -97,7 +95,7 @@ jobs:
           NOTARIZE_APP_BUNDLE_ID: ${{ secrets.NOTARIZE_APP_BUNDLE_ID }}
 
       - name: Build arm64 app
-        run: npx electron-builder --mac --arm64
+        run: npx electron-builder --mac --arm64 --publish=never
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_NAME: ${{ secrets.CSC_NAME }}
@@ -106,60 +104,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           NOTARIZE_APP_BUNDLE_ID: ${{ secrets.NOTARIZE_APP_BUNDLE_ID }}
 
-      - name: Merge dylibs recursively into universal
-        run: |
-          set -euo pipefail
-          APP_ARM="dist/mac-arm64/Ragpiq Link.app"
-          X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
-          APP_X64="$X64_DIR/Ragpiq Link.app"
-          OUT="dist/universal"
-
-          echo "Using x64 app at: $APP_X64"
-          echo "Using arm64 app at: $APP_ARM"
-
-          mkdir -p "$OUT/Contents/Resources"
-          rsync -a --delete "$APP_ARM/Contents/Resources/" "$OUT/Contents/Resources/"
-
-          if [ -d "$APP_X64/Contents/Resources" ]; then
-            find "$APP_X64/Contents/Resources" -name '*.dylib' | while read f; do
-              rel="${f#"$APP_X64/"}"
-              other="$APP_ARM/$rel"
-              out="$OUT/$rel"
-              mkdir -p "$(dirname "$out")"
-              if [[ -f "$other" ]]; then
-                lipo -create "$f" "$other" -output "$out" || cp "$f" "$out"
-              else
-                cp "$f" "$out"
-              fi
-            done
-          else
-            echo "No x64 Resources dir found at $APP_X64/Contents/Resources; skipping dylib merge from x64."
-          fi
-
-      - name: Remove duplicate dylibs before universal build
-        run: |
-          set -euo pipefail
-          X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
-          APP_X64="$X64_DIR/Ragpiq Link.app"
-          APP_ARM="dist/mac-arm64/Ragpiq Link.app"
-          for f in "Contents/Resources/libusb-1.0.dylib"; do
-            rm -f "$APP_X64/$f" "$APP_ARM/$f" || true
-          done
-
       - name: Build universal app
-        run: |
-          set -euo pipefail
-          X64_DIR="$( [ -d dist/mac-x64 ] && echo dist/mac-x64 || echo dist/mac )"
-          APP_ARM="dist/mac-arm64/Ragpiq Link.app"
-
-          # ensure the merged dylib ends up in the final universal app
-          if [ -f "dist/universal/Contents/Resources/libusb-1.0.dylib" ]; then
-            mkdir -p "$APP_ARM/Contents/Resources"
-            cp -f "dist/universal/Contents/Resources/libusb-1.0.dylib" \
-                  "$APP_ARM/Contents/Resources/libusb-1.0.dylib"
-          fi
-
-          npx electron-builder --mac --universal
+        run: npx electron-builder --mac --universal
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
