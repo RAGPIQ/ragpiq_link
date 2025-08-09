@@ -1,26 +1,3 @@
-// 🔍 async_hooks logger for SIGTRAP debugging
-const async_hooks = require('async_hooks');
-const fs = require('fs');
-
-const logFile = fs.openSync('async-debug.log', 'w');
-
-const hook = async_hooks.createHook({
-  init(asyncId, type, triggerAsyncId) {
-    fs.writeSync(logFile, `INIT ${asyncId} ${type} triggered by ${triggerAsyncId}\n`);
-  },
-  before(asyncId) {
-    fs.writeSync(logFile, `BEFORE ${asyncId}\n`);
-  },
-  after(asyncId) {
-    fs.writeSync(logFile, `AFTER ${asyncId}\n`);
-  },
-  destroy(asyncId) {
-    fs.writeSync(logFile, `DESTROY ${asyncId}\n`);
-  }
-});
-
-hook.enable();
-
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -29,6 +6,7 @@ const http = require('http');
 const { URL } = require('url');
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
+const isDev = !app.isPackaged;
 
 if (isMac) {
   app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096');
@@ -57,8 +35,6 @@ const getPythonPath = () => {
   return 'python3';
 };
 
-// 🎯 Determine correct script path based on env
-const isDev = !app.isPackaged;
 const getScriptPath = (scriptName) => {
   return isDev
     ? path.join(__dirname, '..', 'scripts', scriptName)
