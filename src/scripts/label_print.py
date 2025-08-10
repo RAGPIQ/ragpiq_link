@@ -2,29 +2,62 @@ import sys
 import os
 from pathlib import Path
 
-# ===== Debug toggles =====
 DEBUG = os.getenv("RAGPIQ_DEBUG", "").lower() in ("1", "true", "yes")
-if DEBUG:
-    os.environ.setdefault("BROTHER_QL_LOG_LEVEL", "DEBUG")
 
 def dprint(*a, **k):
     if DEBUG:
         print("[label_print]", *a, **k, flush=True)
 
-# --- macOS dynamic libs: only set DYLD_LIBRARY_PATH if it's NOT already set ---
 if sys.platform == "darwin" and "DYLD_LIBRARY_PATH" not in os.environ:
-    exe = Path(sys.executable).resolve()  # .../Resources/python/mac/Library/Frameworks/3.13/bin/python3
-    # climb to .../Contents/Resources
-    resources = exe
-    for _ in range(6):
-        resources = resources.parent
-    py_home = exe.parent.parent                 # .../Library/Frameworks/3.13
-    py_lib  = py_home / "lib"                   # .../Library/Frameworks/3.13/lib
-    # Prefer Resources (libusb-1.0.dylib is copied there) + Python's lib dir
-    os.environ["DYLD_LIBRARY_PATH"] = f"{resources}:{py_lib}"
-    dprint("DYLD_LIBRARY_PATH set to:", os.environ["DYLD_LIBRARY_PATH"])
+    exe = Path(sys.executable).resolve()
+    # Try to find ".../Contents/Resources" in the path (packaged app)
+    resources = None
+    for p in exe.parents:
+        if p.name == "Resources" and p.parent.name == "Contents":
+            resources = p
+            break
 
-# ===== Imports (after DYLD is set) =====
+    if resources is not None:
+        # Packaged layout:
+        # Resources/lib/libusb-1.0.dylib (you will copy the whole libusb dir here)
+        lib_dir = resources / "lib"
+        py_lib  = resources / "python" / "mac" / "Library" / "Frameworks" / "3.13" / "lib"
+        dyld = f"{lib_dir}:{resources}:{py_lib}"
+        libusb_hint = lib_dir / "libusb-1.0.dylib"
+    else:
+        # Dev layout:
+        # <repo>/portable-python/mac/libusb/libusb-1.0.dylib
+        # <repo>/portable-python/mac/Library/Frameworks/3.13/lib
+        # Walk up until we see portable-python
+        pp_root = None
+        for p in exe.parents:
+            cand = p / "portable-python" / "mac"
+            if cand.exists():
+                pp_root = p
+                break
+        if pp_root is None:
+            # fallback: assume current working directory is repo root
+            pp_root = Path.cwd()
+        lib_dir = pp_root / "portable-python" / "mac" / "libusb"
+        py_lib  = pp_root / "portable-python" / "mac" / "Library" / "Frameworks" / "3.13" / "lib"
+        dyld = f"{lib_dir}:{py_lib}"
+        libusb_hint = lib_dir / "libusb-1.0.dylib"
+
+    os.environ["DYLD_LIBRARY_PATH"] = dyld
+    os.environ.setdefault("LIBUSB_PATH", str(libusb_hint))
+    dprint("DYLD_LIBRARY_PATH:", os.environ["DYLD_LIBRARY_PATH"])
+    dprint("LIBUSB_PATH:", os.environ.get("LIBUSB_PATH"))
+
+# preload libusb for clearer errors (optional but helpful)
+if sys.platform == "darwin":
+    try:
+        import ctypes
+        ctypes.CDLL(os.environ.get("LIBUSB_PATH", "libusb-1.0.dylib"))
+        dprint("libusb preloaded OK")
+    except Exception as e:
+        dprint("libusb preload FAILED:", repr(e))
+
+        
 from brother_ql.raster import BrotherQLRaster
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send

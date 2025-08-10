@@ -9,17 +9,29 @@ const isWin = process.platform === 'win32';
 const isDev = !app.isPackaged;
 
 function macSpawnEnv() {
-  const res = process.resourcesPath; // .../Contents/Resources
-  return {
-    ...process.env,
-    // Let Python/PyUSB find libusb in Resources/lib
-    DYLD_LIBRARY_PATH: `${res}/lib:${res}`,
-    LIBUSB_PATH: `${res}/lib/libusb-1.0.dylib`,
-  };
+  if (app.isPackaged) {
+    const res = process.resourcesPath; // .../Contents/Resources
+    const pyLib = path.join(res, "python", "mac", "Library", "Frameworks", "3.13", "lib");
+    return {
+      ...process.env,
+      DYLD_LIBRARY_PATH: `${path.join(res, "lib")}:${res}:${pyLib}`,
+      LIBUSB_PATH: path.join(res, "lib", "libusb-1.0.dylib"),
+    };
+  } else {
+    // dev: repo layout
+    const repoRoot = path.join(__dirname, "..", "..");
+    const libDir  = path.join(repoRoot, "portable-python", "mac", "libusb");
+    const pyLib   = path.join(repoRoot, "portable-python", "mac", "Library", "Frameworks", "3.13", "lib");
+    return {
+      ...process.env,
+      DYLD_LIBRARY_PATH: `${libDir}:${pyLib}`,
+      LIBUSB_PATH: path.join(libDir, "libusb-1.0.dylib"),
+    };
+  }
 }
 
-const spawnEnv =
-  isMac && app.isPackaged ? macSpawnEnv() : process.env;
+// ✅ use it for mac in BOTH dev and packaged
+const spawnEnv = isMac ? macSpawnEnv() : process.env;
 
 
 if (isMac) {
