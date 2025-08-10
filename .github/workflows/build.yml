@@ -43,6 +43,10 @@ jobs:
         run: |
           curl -L --fail -o portable-python.zip https://github.com/RAGPIQ/ragpiq_link/releases/download/v2.1.75/portable-python.zip
           unzip -q portable-python.zip
+
+      - name: Remove macOS quarantine attribute
+        run: |
+          xattr -dr com.apple.quarantine portable-python
       
       - name: List contents of unzipped portable-python
         run: |
@@ -91,6 +95,8 @@ jobs:
           find portable-python/mac -name 'tkConfig.sh' -delete
           find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" \
             ! -path "*/Library/Frameworks/3.13/bin/python3" \
+            ! -path "*/Library/Frameworks/3.13/bin/python3.13" \
+            ! -path "*/Library/Frameworks/3.13/bin/python3-config" \
             -exec chmod -x {} +
 
       - name: Build x64 app
