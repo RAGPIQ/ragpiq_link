@@ -89,7 +89,9 @@ jobs:
           find portable-python/mac -name 'tclooConfig.sh' -delete
           find portable-python/mac -name '*.a' -delete
           find portable-python/mac -name 'tkConfig.sh' -delete
-          find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" -exec chmod -x {} +
+          find portable-python/mac -type f ! -name "*.dylib" ! -name "*.so" \
+            ! -path "*/Library/Frameworks/3.13/bin/python3" \
+            -exec chmod -x {} +
 
       - name: Build x64 app
         run: npx electron-builder --mac --x64 --publish=never

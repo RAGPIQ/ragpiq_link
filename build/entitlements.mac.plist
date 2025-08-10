@@ -21,7 +21,7 @@
 
     <!-- Keep this OFF unless you absolutely need it -->
     <key>com.apple.security.cs.allow-dyld-environment-variables</key>
-    <false/>
+    <true/>
 
     <!-- For release builds leave this false (don’t enable debugger) -->
     <key>com.apple.security.get-task-allow</key>

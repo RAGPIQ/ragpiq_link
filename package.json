@@ -53,6 +53,7 @@
       "!**/doc/**"
     ],
     "directories": { "buildResources": "resources" },
+    "afterPack": "build/afterPack.js",
     "mac": {
         "target": ["dmg", "zip"],
         "icon": "resources/iconMac.icns",

@@ -1,5 +1,19 @@
 import sys
 import os
+from pathlib import Path
+
+# --- macOS dynamic libs: only set DYLD_LIBRARY_PATH if it's NOT already set ---
+if sys.platform == "darwin" and "DYLD_LIBRARY_PATH" not in os.environ:
+    exe = Path(sys.executable).resolve()  # .../Resources/python/mac/Library/Frameworks/3.13/bin/python3
+    # Hop up to .../Resources
+    resources = exe
+    for _ in range(6):
+        resources = resources.parent
+    py_home = exe.parent.parent                 # .../Library/Frameworks/3.13
+    py_lib  = py_home / "lib"                   # .../Library/Frameworks/3.13/lib
+    # Prefer Resources (where libusb-1.0.dylib lives) + Python's lib dir
+    os.environ["DYLD_LIBRARY_PATH"] = f"{resources}:{py_lib}"
+
 from brother_ql.raster import BrotherQLRaster
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
@@ -7,7 +21,6 @@ from PIL import Image, ImageDraw, ImageFont
 import qrcode
 import pdf417gen
 
-os.environ["DYLD_LIBRARY_PATH"] = os.path.abspath("./portable-python/mac/libusb")
 
 # Compatibility patch for Pillow >=10.0.0
 if not hasattr(Image, 'ANTIALIAS'):
