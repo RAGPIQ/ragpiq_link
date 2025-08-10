@@ -18,7 +18,7 @@
     "copyright": "Copyright © 2025 Ragpiq",
     "extraResources": [
       { "from": "portable-python", "to": "python" },
-      { "from": "portable-python/mac/libusb/libusb-1.0.dylib", "to": "libusb-1.0.dylib" }
+      { "from": "portable-python/mac/libusb", "to": "lib" } 
     ],
     "asarUnpack": [
       "src/scripts",

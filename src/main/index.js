@@ -8,6 +8,20 @@ const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 const isDev = !app.isPackaged;
 
+function macSpawnEnv() {
+  const res = process.resourcesPath; // .../Contents/Resources
+  return {
+    ...process.env,
+    // Let Python/PyUSB find libusb in Resources/lib
+    DYLD_LIBRARY_PATH: `${res}/lib:${res}`,
+    LIBUSB_PATH: `${res}/lib/libusb-1.0.dylib`,
+  };
+}
+
+const spawnEnv =
+  isMac && app.isPackaged ? macSpawnEnv() : process.env;
+
+
 if (isMac) {
   app.commandLine.appendSwitch('js-flags', '--max-old-space-size=4096');
 }
@@ -216,14 +230,8 @@ ipcMain.handle('start-printer-watcher', async () => {
   console.log("🧩 Starting printer watcher from path:", detectPrinterPath);
 
   printerWatcherProcess = spawn(getPythonPath(), [detectPrinterPath], {
-  env: {
-    ...process.env,
-    ...(isMac && !isDev ? {
-      DYLD_LIBRARY_PATH: path.join(process.resourcesPath)
-    } : {})
-  }
+  env: spawnEnv,
 });
-
 
   printerWatcherProcess.on('error', (err) => {
     console.error("❌ Spawn error (printer watcher):", err);
@@ -277,12 +285,7 @@ ipcMain.handle('print-label', async (event, label) => {
     console.log("🏷️ Printing label via:", labelPrintPath);
 
     const python = spawn(getPythonPath(), [labelPrintPath, label.qr, label.barcode, label.created], {
-  env: {
-    ...process.env,
-    ...(isMac && !isDev ? {
-      DYLD_LIBRARY_PATH: path.join(process.resourcesPath)
-    } : {})
-  }
+  env: spawnEnv,
 });
 
 

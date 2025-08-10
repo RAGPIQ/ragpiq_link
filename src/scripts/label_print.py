@@ -2,18 +2,29 @@ import sys
 import os
 from pathlib import Path
 
+# ===== Debug toggles =====
+DEBUG = os.getenv("RAGPIQ_DEBUG", "").lower() in ("1", "true", "yes")
+if DEBUG:
+    os.environ.setdefault("BROTHER_QL_LOG_LEVEL", "DEBUG")
+
+def dprint(*a, **k):
+    if DEBUG:
+        print("[label_print]", *a, **k, flush=True)
+
 # --- macOS dynamic libs: only set DYLD_LIBRARY_PATH if it's NOT already set ---
 if sys.platform == "darwin" and "DYLD_LIBRARY_PATH" not in os.environ:
     exe = Path(sys.executable).resolve()  # .../Resources/python/mac/Library/Frameworks/3.13/bin/python3
-    # Hop up to .../Resources
+    # climb to .../Contents/Resources
     resources = exe
     for _ in range(6):
         resources = resources.parent
     py_home = exe.parent.parent                 # .../Library/Frameworks/3.13
     py_lib  = py_home / "lib"                   # .../Library/Frameworks/3.13/lib
-    # Prefer Resources (where libusb-1.0.dylib lives) + Python's lib dir
+    # Prefer Resources (libusb-1.0.dylib is copied there) + Python's lib dir
     os.environ["DYLD_LIBRARY_PATH"] = f"{resources}:{py_lib}"
+    dprint("DYLD_LIBRARY_PATH set to:", os.environ["DYLD_LIBRARY_PATH"])
 
+# ===== Imports (after DYLD is set) =====
 from brother_ql.raster import BrotherQLRaster
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
@@ -21,12 +32,16 @@ from PIL import Image, ImageDraw, ImageFont
 import qrcode
 import pdf417gen
 
+# Optional: probe libusb loadability on macOS for clearer errors
+if sys.platform == "darwin" and DEBUG:
+    try:
+        import ctypes
+        ctypes.CDLL("libusb-1.0.dylib")
+        dprint("libusb-1.0.dylib loaded OK")
+    except Exception as e:
+        dprint("libusb load FAILED:", repr(e))
 
-# Compatibility patch for Pillow >=10.0.0
-if not hasattr(Image, 'ANTIALIAS'):
-    Image.ANTIALIAS = Image.Resampling.LANCZOS
-
-# Label layout constants
+# ===== Label constants =====
 LABEL_WIDTH = 306
 LABEL_HEIGHT = 991
 TOP_MARGIN = 35
@@ -36,6 +51,10 @@ PDF417_OFFSET = 80
 TOP_GROUP_WIDTH = int(LABEL_WIDTH * 0.85)
 PDF417_WIDTH = int(LABEL_WIDTH * 1.10)
 PDF417_HEIGHT = 230
+
+# Pillow >=10 fallback
+if not hasattr(Image, 'ANTIALIAS'):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
 
 def get_resized_font(text, max_width, font_path=None):
     if font_path is None:
@@ -53,33 +72,27 @@ def get_resized_font(text, max_width, font_path=None):
                 bbox = font.getbbox(text)
                 text_width = bbox[2] - bbox[0]
             except Exception:
-                text_width = 9999  # fallback in worst case
-
+                text_width = 9999
         if text_width > max_width:
             break
         size += 1
-
     return font
 
 def create_label_image(text1, qr_data, text2, pdf_data, width=LABEL_WIDTH, height=LABEL_HEIGHT):
     img = Image.new('1', (width, height), 1)
     draw = ImageDraw.Draw(img)
 
-    # Fonts
     header_font = get_resized_font(text1, TOP_GROUP_WIDTH)
     date_font = get_resized_font(text2, TOP_GROUP_WIDTH)
     bbox = draw.textbbox((0, 0), text1, font=header_font)
     header_h = bbox[3] - bbox[1]
 
-
-    # QR Code
     qr = qrcode.QRCode(border=0)
     qr.add_data(qr_data)
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white").convert("1")
     qr_img = qr_img.resize((TOP_GROUP_WIDTH, TOP_GROUP_WIDTH), Image.NEAREST)
 
-    # Compose top section
     y_cursor = TOP_MARGIN
     draw.text(((width - TOP_GROUP_WIDTH) // 2, y_cursor), text1, font=header_font, fill=0)
     y_cursor += header_h + SPACING
@@ -87,17 +100,45 @@ def create_label_image(text1, qr_data, text2, pdf_data, width=LABEL_WIDTH, heigh
     y_cursor += qr_img.height + SPACING
     draw.text(((width - TOP_GROUP_WIDTH) // 2, y_cursor), text2, font=date_font, fill=0)
 
-    # PDF417
     codes = pdf417gen.encode(pdf_data)
     pdf_img = pdf417gen.render_image(codes, scale=2).convert("1")
     pdf_img = pdf_img.resize((PDF417_WIDTH, PDF417_HEIGHT))
     pdf_x = (width - PDF417_WIDTH) // 2
     pdf_y = height - PDF417_HEIGHT - BOTTOM_MARGIN + PDF417_OFFSET
     img.paste(pdf_img, (pdf_x, pdf_y))
-
     return img
 
-def print_label(img, printer_identifier="usb://0x04f9:0x2042", model="QL-700"):
+# ----- USB auto-discovery (pyusb) -----
+def autodetect_printer_identifier(vendor_hex="0x04f9"):
+    """
+    Returns a 'usb://0xVVVV:0xPPPP' for the first Brother device found, or None.
+    """
+    try:
+        import usb.core  # pyusb
+        vid = int(vendor_hex, 16)
+        dev = usb.core.find(idVendor=vid)
+        if dev is None:
+            dprint("pyusb found NO Brother devices")
+            return None
+        pid = dev.idProduct
+        ident = f"usb://0x{vid:04x}:0x{pid:04x}"
+        dprint("pyusb found device:", ident)
+        return ident
+    except Exception as e:
+        dprint("pyusb discovery failed:", repr(e))
+        return None
+
+def print_label(img, printer_identifier=None, model="QL-700"):
+    """
+    printer_identifier:
+      - if None: try autodetect via pyusb
+      - or explicit like 'usb://0x04f9:0x2042'
+    """
+    if not printer_identifier:
+        printer_identifier = autodetect_printer_identifier() or "usb://0x04f9:0x2042"
+
+    dprint("Using printer_identifier:", printer_identifier, "model:", model)
+
     qlr = BrotherQLRaster(model)
     qlr.exception_on_warning = True
     qlr.cut = False
@@ -115,15 +156,36 @@ def print_label(img, printer_identifier="usb://0x04f9:0x2042", model="QL-700"):
         cut=False
     )
 
-    send(
-        instructions=instructions,
-        printer_identifier=printer_identifier,
-        backend_identifier='pyusb'
-    )
+    try:
+        send(
+            instructions=instructions,
+            printer_identifier=printer_identifier,
+            backend_identifier='pyusb'
+        )
+    except Exception as e:
+        # Make the error explicit so you see it in Electron's stderr
+        dprint("send() FAILED:", repr(e))
+        raise
+
+def _self_test():
+    print("=== label_print.py self-test ===")
+    print("sys.platform:", sys.platform)
+    print("sys.executable:", sys.executable)
+    print("DYLD_LIBRARY_PATH:", os.environ.get("DYLD_LIBRARY_PATH"))
+    try:
+        ident = autodetect_printer_identifier()
+        print("Autodetect printer:", ident)
+    except Exception as e:
+        print("Autodetect failed:", repr(e))
 
 if __name__ == "__main__":
+    # quick self-test mode: `python label_print.py --self-test`
+    if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
+        _self_test()
+        sys.exit(0)
+
     if len(sys.argv) != 4:
-        print("Usage: python label_print.py <qrcode> <barcode> <created>")
+        print("Usage: python label_print.py <qrcode> <barcode> <created>", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -138,7 +200,7 @@ if __name__ == "__main__":
             pdf_data=barcode_val
         )
 
-        print_label(label_img)
+        print_label(label_img, printer_identifier=None)  # let it auto-detect
         print("Printed label successfully.")
         sys.exit(0)
     except Exception as e:
