@@ -57,13 +57,13 @@ jobs:
           "$EMB" -m pip install --upgrade pip
           "$EMB" -m pip install --no-cache-dir brother_ql pyusb pillow qrcode pdf417gen
           "$EMB" - <<'PY'
-import sys, pkgutil
-mods=["brother_ql","usb","PIL","qrcode","pdf417gen"]
-missing=[m for m in mods if pkgutil.find_loader(m) is None]
-print("PY:", sys.executable)
-print("Missing:", missing)
-assert not missing, f"Missing: {missing}"
-PY
+          import sys, pkgutil
+          mods=["brother_ql","usb","PIL","qrcode","pdf417gen"]
+          missing=[m for m in mods if pkgutil.find_loader(m) is None]
+          print("PY:", sys.executable)
+          print("Missing:", missing)
+          assert not missing, f"Missing: {missing}"
+          PY
       
       - name: List contents of unzipped portable-python
         run: |
