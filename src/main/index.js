@@ -14,6 +14,7 @@ function macSpawnEnv() {
     const pyLib = path.join(res, "python", "mac", "Library", "Frameworks", "3.13", "lib");
     return {
       ...process.env,
+      RAGPIQ_DEBUG: "1",
       DYLD_LIBRARY_PATH: `${path.join(res, "lib")}:${res}:${pyLib}`,
       LIBUSB_PATH: path.join(res, "lib", "libusb-1.0.dylib"),
     };
@@ -24,6 +25,7 @@ function macSpawnEnv() {
     const pyLib   = path.join(repoRoot, "portable-python", "mac", "Library", "Frameworks", "3.13", "lib");
     return {
       ...process.env,
+      RAGPIQ_DEBUG: "1",
       DYLD_LIBRARY_PATH: `${libDir}:${pyLib}`,
       LIBUSB_PATH: path.join(libDir, "libusb-1.0.dylib"),
     };
@@ -316,29 +318,15 @@ ipcMain.handle('print-label', async (event, label) => {
       stderrBuffer += data.toString();
     });
 
-    python.on('close', (code) => {
-  if (code === 0) {
-    if (win && !win.isDestroyed()) {
-      win.webContents.send('label-log', {
-        type: 'success',
-        message: stdoutBuffer.trim()
-      });
-    }
-  } else {
-    let errorMessage = "Failed to print label.";
-    if (stderrBuffer.includes("Device not found")) {
-      errorMessage = "Label printer not connected.";
-    }
-
-    if (win && !win.isDestroyed()) {
-      win.webContents.send('label-log', {
-        type: 'error',
-        message: errorMessage
-      });
-    }
+  python.on('close', (code) => {
+  const msg = (stderrBuffer || stdoutBuffer || '').trim() || 'Unknown error';
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('label-log', {
+      type: code === 0 ? 'success' : 'error',
+      message: msg,               // ← show the actual Python stderr
+    });
   }
-
   resolve();
-});
+   });
   });
 });

@@ -47,6 +47,23 @@ jobs:
       - name: Remove macOS quarantine attribute
         run: |
           xattr -dr com.apple.quarantine portable-python
+
+      - name: Install Python dependencies into embedded runtime
+        run: |
+          set -e
+          EMB="portable-python/mac/Library/Frameworks/3.13/bin/python3"
+          chmod +x "$EMB" || true
+          "$EMB" -m ensurepip --upgrade || true
+          "$EMB" -m pip install --upgrade pip
+          "$EMB" -m pip install --no-cache-dir brother_ql pyusb pillow qrcode pdf417gen
+          "$EMB" - <<'PY'
+import sys, pkgutil
+mods=["brother_ql","usb","PIL","qrcode","pdf417gen"]
+missing=[m for m in mods if pkgutil.find_loader(m) is None]
+print("PY:", sys.executable)
+print("Missing:", missing)
+assert not missing, f"Missing: {missing}"
+PY
       
       - name: List contents of unzipped portable-python
         run: |
