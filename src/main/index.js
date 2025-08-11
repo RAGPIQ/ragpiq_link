@@ -32,8 +32,16 @@ function macSpawnEnv() {
   }
 }
 
+function winSpawnEnv() {
+  if (!app.isPackaged) return process.env;
+  const res = process.resourcesPath;
+  const libDir = path.join(res, "lib");
+  return { ...process.env, PATH: `${libDir};${process.env.PATH}` };
+}
+
+
 // ✅ use it for mac in BOTH dev and packaged
-const spawnEnv = isMac ? macSpawnEnv() : process.env;
+const spawnEnv = isMac ? macSpawnEnv() : isWin ? winSpawnEnv() : process.env;
 
 
 if (isMac) {

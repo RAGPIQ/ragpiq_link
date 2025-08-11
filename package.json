@@ -16,15 +16,10 @@
     "productName": "Ragpiq Link",
     "artifactName": "Ragpiq.Link.Setup-${arch}.${ext}",
     "copyright": "Copyright © 2025 Ragpiq",
-    "extraResources": [
-      { "from": "portable-python", "to": "python" },
-      { "from": "portable-python/mac/libusb", "to": "lib" } 
-    ],
-    "asarUnpack": [
-      "src/scripts",
-      "portable-python/mac/Library/Frameworks/3.13/bin",
-      "portable-python/mac/Library/Frameworks/3.13/lib"
-    ],
+      "asarUnpack": [
+        "src/scripts/**",
+        "src/scripts/fonts/**"
+      ],
     "files": [
       "**/*",
       "!portable-python/mac/Library/Frameworks/3.13/Frameworks/Tcl.framework/PrivateHeaders/**",
@@ -41,7 +36,6 @@
       "!**/*.egg-info/**",
       "!**/test*/**",
       "!**/config-3.13-darwin/**",
-      "!**/lib-dynload/**",
       "!**/bin/python3.13",
       "!**/lib/python3.13/config-3.13-darwin/._python.o",
       "**/*.gif",
@@ -64,6 +58,10 @@
         "hardenedRuntime": true,
         "category": "public.app-category.productivity",
         "executableName": "Ragpiq Link",
+        "extraResources": [
+        { "from": "portable-python/mac/Library/Frameworks/3.13", "to": "python/mac/Library/Frameworks/3.13" },
+        { "from": "portable-python/mac/libusb/libusb-1.0.dylib", "to": "lib/libusb-1.0.dylib" }
+      ],
         "extendInfo": {
             "CFBundleExecutable": "Ragpiq Link",
             "CFBundleName": "Ragpiq Link",
@@ -75,7 +73,11 @@
     },
     "win": {
       "target": ["nsis"],
-      "icon": "resources/icon.ico"
+      "icon": "resources/icon.ico",
+      "extraResources": [
+        { "from": "portable-python/win", "to": "python/win" },
+        { "from": "portable-python/win/libusb-1.0.dll", "to": "lib/libusb-1.0.dll" }
+      ]
     },
     "afterSign": "build/afterSign.js"
   },

@@ -85,9 +85,6 @@ PY
       - name: Clean portable-python
         run: |
           set -euo pipefail
-          find portable-python -name '__pycache__' -exec rm -rf {} +
-          find portable-python -name '*.pyc' -delete
-          find portable-python -name '*.pyo' -delete
           find portable-python -type d -name 'test*' -exec rm -rf {} +
           find portable-python -name '*.gif' -delete
           find portable-python -name '*.tcl' -delete
@@ -100,8 +97,7 @@ PY
           find portable-python -path '*/share/*' -exec rm -rf {} +
           find portable-python -path '*/doc/*' -exec rm -rf {} +
 
-          find portable-python/mac -name '__pycache__' -exec rm -rf {} +
-          find portable-python/mac -type f \( -name '*.pyc' -o -name '*.pyo' -o -name '*.py' -o -name '*.txt' -o -name '*.rst' -o -name '*.md' \) -delete
+          find portable-python/mac -type f \( -name '*.txt' -o -name '*.rst' -o -name '*.md' \) -delete
           find portable-python/mac -type d -name 'test*' -exec rm -rf {} +
           find portable-python/mac -type f \( -name '*.gif' -o -name '*.png' -o -name '*.tcl' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.tiff' -o -name '*.exe' -o -name '*.dll' -o -name '*.pyd' -o -name '*.bat' -o -name '*.pak' -o -name '*.icns' \) -delete
           find portable-python/mac -path '*/share/*' -exec rm -rf {} +
